@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trip info</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+<h1>Trip info</h1>
+<p>Trip id: {{ trip.id }}</p>
+<p>Distance: {{ trip.distance }} m</p>
+<p>Date: {{ trip.departed_at }}</p>
+<p>First recorded time: {{ trip.track_points[0].t }}</p>
+</body>
+</html>

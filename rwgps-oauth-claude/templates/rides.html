@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Rides - RWGPS OAuth Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <p><a href="{{ url_for('index') }}">&larr; Home</a></p>
+  <h1>My Rides</h1>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% elif rides is none or rides|length == 0 %}
+    <p>No rides found.</p>
+  {% else %}
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Distance (m)</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for trip in rides %}
+          <tr>
+            <td><a href="/trip_info/{{trip.id}}">{{ trip.name }}</a></td>
+            <td>{{ trip.distance }}</td>
+            <td>{{ trip.departed_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</body>
+</html>

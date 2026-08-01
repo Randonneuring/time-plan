@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Time Planner trip and route</title>
+      <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
+          input:invalid {
+        border: 2px dashed red;
+      }
+
+      input:valid {
+        border: 2px solid black;
+      }
+  </style>
+</head>
+<body>
+<h1>Time Planner trip and route</h1>
+<p>To match times to a route, both the route and trip must
+    be in Ride With GPS and accessible to you.  Open those
+    pages in other browser tabs so you can copy their URLs
+    to paste below.
+</p>
+<p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
+<p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
+
+<form method="post" action="analyze_trip">
+    <label_for trip_url>
+        Trip URL:     </label_for>
+        <input type="url" name="trip_url"
+            pattern="https://ridewithgps.com/trips/[0-9]+"
+               title="Valid URLs look like https://ridewithgps.com/trips/123456789"
+               required
+        >
+    </input>
+    <label_for route_url>Route URL:</label_for>
+    <input type="url" name="route_url"
+        pattern="https://ridewithgps.com/routes/[0-9]+"
+        title="Valid URLs look like https://ridewithgps.com/routes/123456789"
+        required>
+    </input>
+    <input type="submit" value="Submit">
+</form>
+
+</body>
+</html>
