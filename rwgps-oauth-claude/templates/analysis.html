@@ -13,27 +13,17 @@
 <body>
 <h1>Route info</h1>
 <p>Route id: {{ route.id }}</p>
-<p>Distance: {{ route.distance }} m</p>
-<p>First three course points</p>
-<p> {{ route.course_points[0] }}</p>
-<p> {{ route.course_points[1] }}</p>
-<p> {{ route.course_points[2] }}</p>
-<p>Last three course points</p>
-<p> {{ route.course_points[-3] }}</p>
-<p> {{ route.course_points[-2] }}</p>
-<p> {{ route.course_points[-1] }}</p>
-<h2>Course points</h2>
+<p>Distance: {{ route.distance }} meters </p>
+<p>Landmarks</p>
 <table>
     <tr>
         <th>Distance</th>
-        <th>Course point</th>
-        <th>Cue</th>
+        <th>Info</th>
     </tr>
-    {% for course_point in route.course_points %}
+    {% for landmark in landmarks %}
         <tr>
-            <td>{{ course_point['d']}}</td>
-            <td>{{ course_point['t'] }}</td>
-            <td>{{ course_point['n'] }}</td>
+        <td>{{landmark[2]}}</td>
+            <td>{{landmark[3]}}</td>
         </tr>
     {% endfor %}
 </table>

@@ -1,8 +1,10 @@
 """
-Ride With GPS OAuth2 Demo
+Ride With GPS OAuth2 Sample
 =========================
+Initial version by Claude, now heavily modified but with the
+OAuth2 flow intact.
 
-This is a deliberately small Flask app that demonstrates the OAuth2
+This was a deliberately small Flask app that demonstrates the OAuth2
 "Authorization Code" flow against the Ride With GPS (RWGPS) API.
 
 WHAT IS OAUTH, IN ONE PARAGRAPH
@@ -45,11 +47,17 @@ The defaults below follow the conventional Doorkeeper-style paths
 (`/oauth/authorize`, `/oauth/token`) that RWGPS's dashboard describes, but
 you should confirm them against your own client settings and adjust the
 .env file if they differ.
+
+
+
+
 """
 
 import os
 import secrets
 from urllib.parse import urlencode
+
+import route_trip_match
 
 import requests
 from dotenv import load_dotenv
@@ -207,49 +215,6 @@ def trip_form():
     return render_template("trip-form.html")
 
 
-@app.route("/Xrides")
-def Xrides():
-    """
-    Step 6 of the flow: use the access token to call a protected RWGPS API
-    endpoint on the user's behalf -- here, their list of trips (rides).
-    """
-    access_token = session.get("access_token")
-    if not access_token:
-        log.error("No access token in session")
-        return redirect(url_for("index"))
-
-    # Authenticated API calls pass the access token in the Authorization
-    # header, using the "Bearer" scheme -- this is standard OAuth2.
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    response = requests.get(
-        f"{RWGPS_API_BASE}/trips.json",
-        headers=headers,
-        params={"page": 1, "page_size": 20},
-        timeout=10,
-    )
-
-    if response.status_code == 401:
-        # The token expired or was revoked. A production app would try to
-        # use the refresh_token here to get a new access_token. For this
-        # demo, we just send the user back to log in again.
-        session.pop("access_token", None)
-        session.pop("refresh_token", None)
-        return render_template(
-            "index.html", has_token=False,
-            error="Your session expired. Please connect again.",
-        )
-
-    if not response.ok:
-        return render_template(
-            "rides.html", rides=None,
-            error=f"RWGPS API error ({response.status_code}): {response.text}",
-        )
-
-    data = response.json()
-    trip_list = data.get("trips", [])
-    return render_template("rides.html", rides=trip_list, error=None)
-
 
 
 @app.route("/analyze_trip", methods=["POST"])
@@ -281,8 +246,11 @@ def analyze_trip():
 
     log.debug(f"Route structure attributes: {route_struct.keys()}\nTrip structure attributes: {trip_struct.keys()}\n")
 
+    # log.debug(f"Route points: {route_trip_match.route_points_from_rwgps(route_struct)}")
+    landmarks = route_trip_match.route_points_from_rwgps(route_struct)
     return render_template("analysis.html",
                            trip=trip_struct, route=route_struct,
+                           landmarks=landmarks,
                            error=None)
 
 
