@@ -248,9 +248,13 @@ def analyze_trip():
 
     # log.debug(f"Route points: {route_trip_match.route_points_from_rwgps(route_struct)}")
     landmarks = route_trip_match.route_points_from_rwgps(route_struct)
+    locs, dists, times  = route_trip_match.trip_points_from_rwgps(trip_struct)
+    # For debugging purposes, we want to turn the parallel arrays of trip
+    points = list(zip(locs, dists, times))
+
     return render_template("analysis.html",
                            trip=trip_struct, route=route_struct,
-                           landmarks=landmarks,
+                           landmarks=landmarks, trip_points=points,
                            error=None)
 
 

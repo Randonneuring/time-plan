@@ -51,6 +51,7 @@ RWGPS significant cues appear some as track points (identifiable by type, e.g., 
 
 import numpy as np
 from pykdtree.kdtree import KDTree
+import datetime as dt
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -58,6 +59,7 @@ log = logging.getLogger(__name__)
 
 DIRECTIONAL_CUES = set(["Left", "Right", "Slight Left", "Slight Right", "Sharp Left", "Sharp Right",
                         "Straight", "U-Turn"])
+PAUSE_THRESHOLD_METERS = 5
 
 # The trip points structure is a triple of parallel arrays.  The first
 # list is lat/lon pairs, the second is integer distances in meters, the third
@@ -74,7 +76,7 @@ trip_points_t = tuple[list[tuple[float, float]], list[int], list[int]]
 route_points_t = list[tuple[float, float], float, str]
 #                     latlon                          dist         textual description
 
-def route_points_from_rwgps(route: dict) -> list[route_points_t]:
+def route_points_from_rwgps(route: dict) -> route_points_t:
     """Extract the route points from a route object returned by the RWGPS API"""
     result = []
     # Include cues but excluding directional cues
@@ -91,11 +93,43 @@ def route_points_from_rwgps(route: dict) -> list[route_points_t]:
             result.append((point["lat"], point["lng"], point["distances"][0], point["type_name"] + ":" + point["name"]))
     return sorted(result, key=lambda x: x[2])
 
+def trip_points_from_rwgps(trip: dict) -> trip_points_t:
+    """Extract the trip points from a trip object returned by the RWGPS API.
+    We filter to remove stuttering or "wandering" during pauses, based on
+    GPS accuracy being within a bound defined by PAUSE_THRESHOLD_METERS.
+    """
+    points_array = []  # List of lat, lon pairs
+    distances_array = [] # Parallel list of distances in meters
+    timestamps_array = [] # Parallel list of times as Unix epoch seconds
+
+    count_skipped = 0
+    count_kept = 0
 
 
+    # Initial point is the departure point and time at distance 0
+    lat_lon = (trip["first_lat"], trip["first_lng"])
+    dist = 0
+    timestamp = dt.datetime.fromisoformat(trip["departed_at"]).timestamp()
 
+    points_array.append(lat_lon)
+    distances_array.append(dist)
+    timestamps_array.append(timestamp)
 
-    return result
+    # Same pattern for each subsequent point.
+    for point in trip["track_points"]:
+        if point["d"] < dist + PAUSE_THRESHOLD_METERS:
+            log.debug(f"Skipping point {point['d']} close to prior distance {dist}")
+            count_skipped += 1
+            continue
+        count_kept += 1
+        lat_lon = (point["y"], point["x"])
+        dist = point["d"]
+        timestamp = point["t"]
+        points_array.append(lat_lon)
+        distances_array.append(dist)
+        timestamps_array.append(timestamp)
+    log.debug(f"Kept {count_kept} points, skipped {count_skipped}")
+    return (points_array, distances_array, timestamps_array)
 
 
 

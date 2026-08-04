@@ -44,5 +44,15 @@
 <p>Distance: {{ trip.distance }} m</p>
 <p>Date: {{ trip.departed_at }}</p>
 <p>First recorded time: {{ trip.track_points[0].t }}</p>
+<table>
+    <tr>
+        <th>Dist</th><th>LatLon</th><th>Time</th>
+    </tr>
+    {% for point in trip_points %}
+        <tr>
+            <td>{{point[1]}}</td><td>{{point[0]}}</td><td>{{point[2]}}</td>
+        </tr>
+    {% endfor %}
+</table>
 </body>
 </html>
