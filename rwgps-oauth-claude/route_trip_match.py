@@ -52,13 +52,18 @@ RWGPS significant cues appear some as track points (identifiable by type, e.g., 
 import numpy as np
 from pykdtree.kdtree import KDTree
 import datetime as dt
+from zoneinfo import ZoneInfo
+import numpy as np
+from haversine import haversine
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 DIRECTIONAL_CUES = set(["Left", "Right", "Slight Left", "Slight Right", "Sharp Left", "Sharp Right",
-                        "Straight", "U-Turn"])
+                        "Straight", "Uturn"])
+INFO_NOT_LANDMARK = set(["Danger", "Caution", "Food", "Water", "Information"])
+IGNORE_CUES = DIRECTIONAL_CUES | INFO_NOT_LANDMARK
 PAUSE_THRESHOLD_METERS = 5
 
 # The trip points structure is a triple of parallel arrays.  The first
@@ -73,25 +78,28 @@ trip_points_t = tuple[list[tuple[float, float]], list[int], list[int]]
 # The route points structure is a list of tuples rather than a tuple of lists,
 # so that it can be easily sorted.
 #
-route_points_t = list[tuple[float, float], float, str]
+route_points_t = list[tuple[tuple[float, float], float, str]]
 #                     latlon                          dist         textual description
 
 def route_points_from_rwgps(route: dict) -> route_points_t:
     """Extract the route points from a route object returned by the RWGPS API"""
     result = []
-    # Include cues but excluding directional cues
+    # Include cues but excluding directional cues & some info cues
     course_points = route.get("course_points", [])
     assert course_points, "No course points in route"
     for point in course_points:
-        if point["t"] not in DIRECTIONAL_CUES:
-            result.append((point["y"], point["x"], point["d"], point["t"] + ":" + point["n"] ))
+        if point["t"] not in IGNORE_CUES:
+            log.debug(f"Keeping cue of type |{point['t']}| at distance {point['d']}")
+            text = f"({point['t']}) {point['n']}"
+            result.append(((point["y"], point["x"]), point["d"], text ))
     # Include landmarks with distances (that is, POIs that are on course)
     pois = route.get("points_of_interest", [])
     for point in pois:
-        if point.get("distances", []):
+        if point.get("distances", []) and point.get("type_name", "") not in INFO_NOT_LANDMARK:
             # This is a POI that is on the course
-            result.append((point["lat"], point["lng"], point["distances"][0], point["type_name"] + ":" + point["name"]))
-    return sorted(result, key=lambda x: x[2])
+            text = f"({point['type_name']}) {point['name']}"
+            result.append(((point["lat"], point["lng"]), point["distances"][0], text))
+    return sorted(result, key=lambda x: x[1])
 
 def trip_points_from_rwgps(trip: dict) -> trip_points_t:
     """Extract the trip points from a trip object returned by the RWGPS API.
@@ -118,7 +126,7 @@ def trip_points_from_rwgps(trip: dict) -> trip_points_t:
     # Same pattern for each subsequent point.
     for point in trip["track_points"]:
         if point["d"] < dist + PAUSE_THRESHOLD_METERS:
-            log.debug(f"Skipping point {point['d']} close to prior distance {dist}")
+            # log.debug(f"Skipping point {point['d']} close to prior distance {dist}")
             count_skipped += 1
             continue
         count_kept += 1
@@ -129,7 +137,98 @@ def trip_points_from_rwgps(trip: dict) -> trip_points_t:
         distances_array.append(dist)
         timestamps_array.append(timestamp)
     log.debug(f"Kept {count_kept} points, skipped {count_skipped}")
+    assert len(points_array) == len(distances_array) == len(timestamps_array)
     return (points_array, distances_array, timestamps_array)
+
+"""Search parameter constants in meters"""
+MAX_SEGMENT_BONUS = 1000     # Allow up to 1km extra between controls (and more if needed)
+MAX_LANDMARK_MISS = 500      # Match point up to 500 meters from landmark
+NUM_CANDIDATES = 20          # Enough trip points to ensure getting all passages
+
+def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
+    """Return a list of dictionaries associating each route point with
+    a segment of the trip point data within epsilon of the route point.
+    Trip distance disambiguates multiple passages through the same point,
+    e.g. on lollipop and out-and-back routes, assuming trip points are
+    widely enough spaced that a set of CANDIDATES points can't all be
+    from one passage.
+    If no trip point qualifies, we include the route point with a
+    negative indicator (found=False) and default values.
+    """
+    trip_latlons, trip_dists, trip_times = trip
+    kdtree = KDTree(np.array(trip_latlons))
+    matches = []
+    bonus_meters = 0    # Accumulated extra distance from going off course
+    for route_point in route:
+        log.debug(f"Considering {route_point}")
+        latlon, dist, text = route_point
+        _, candidates_l = kdtree.query(np.array([np.array(latlon)]), NUM_CANDIDATES)
+        candidates = candidates_l[0]
+        # Result is a list of indices into trip_latlons, trip_dists, and trip_times.
+        log.debug(f"Candidates for {text} are {candidates}")
+
+        if len(candidates) == 0:
+            entry = {"found": False, "dist": dist, "time": "", "latlon": latlon, "text": text}
+            continue
+
+        # Filter out multiple passages to the same landmark by
+        # checking trip distance, in meters
+        filtered = []
+        bound_low = dist - MAX_LANDMARK_MISS
+        bound_high = dist + MAX_LANDMARK_MISS + bonus_meters
+        for candidate in candidates:
+            # log.debug(f"Considering candidate {candidate} among {len(trip_dists)}")
+            if bound_low <= trip_dists[candidate] <= bound_high:
+                filtered.append(candidate)
+        if len(filtered) > 0:
+            candidates = filtered
+
+        # Although we picked closest candidates using latlon, we should use
+        # haversine distance to choose the closest point.
+        #
+        closest = candidates[0]
+        closest_dist = haversine(latlon, trip_latlons[closest])
+        for candidate in candidates:
+            candidate_dist = haversine(latlon, trip_latlons[candidate])
+            if candidate_dist < closest_dist:
+                closest = candidate
+                closest_dist = candidate_dist
+        closest_time = trip_times[closest]
+        entry = {"found": True, "dist": dist, "time": closest_time, "latlon": trip_latlons[closest], "text": text}
+        bonus_meters = max(bonus_meters, trip_dists[candidate] - dist)
+        matches.append(entry)
+
+    return matches
+
+def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
+    """Decorate each match struct with human-readable text and time stamp.
+    Modifies each dict structure (does not return a new list).
+    Specialized to RWGPS API trip structure; a similar function could be
+    created for FIT or TCX files.
+    """
+    begin_time_unix = trip_struc["track_points"][0]["t"]
+    zone_info = ZoneInfo(trip_struc.get("time_zone", "utc"))
+    log.debug(f"Trip time zone: {zone_info}")
+    for match in matches:
+        if match["found"]:
+            unix_time = match["time"]
+            elapsed_seconds = unix_time - begin_time_unix
+            elapsed = dt.timedelta(seconds=elapsed_seconds)
+            passed = dt.datetime.fromtimestamp(unix_time, tz=zone_info)
+            time_iso = passed.isoformat()
+            time_local = passed.astimezone().strftime("%H:%M")
+            match["time_iso"] = time_iso
+            match["time_local"] = time_local
+            match["time_elapsed"] = str(elapsed)  # Should display as HH:MM:SS
+            km = match["dist"] / 1000.0
+            match["dist_km"] = km
+            match["dist_mi"] = km * 0.621371
+        else:
+            match["dist_km"] = -1
+            match["dist_mi"] = -1
+            match["time_iso"] = ""
+            match["time_elapsed"] = ""
+            match["time_local"] = ""
 
 
 

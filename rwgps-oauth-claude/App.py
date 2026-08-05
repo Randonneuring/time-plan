@@ -237,24 +237,34 @@ def analyze_trip():
 
     try:
         trip_struct = get_details(trip_id, "trip")
+        log.debug(f"trip departed at: {trip_struct['departed_at']}")
+        log.debug(f"trip time zone: {trip_struct['time_zone']}")
         route_struct = get_details(route_id, "route")
     except Exception as e:
         log.error(f"Error getting trip or route details: {e}")
         return redirect(url_for("index"))
 
-    log.debug(f"Route structure: {route_struct}")
-
-    log.debug(f"Route structure attributes: {route_struct.keys()}\nTrip structure attributes: {trip_struct.keys()}\n")
+    # log.debug(f"Route structure: {route_struct}")
+    # log.debug(f"Route structure attributes: {route_struct.keys()}\nTrip structure attributes: {trip_struct.keys()}\n")
 
     # log.debug(f"Route points: {route_trip_match.route_points_from_rwgps(route_struct)}")
     landmarks = route_trip_match.route_points_from_rwgps(route_struct)
-    locs, dists, times  = route_trip_match.trip_points_from_rwgps(trip_struct)
+    trip_points = route_trip_match.trip_points_from_rwgps(trip_struct)
+
     # For debugging purposes, we want to turn the parallel arrays of trip
+    locs, dists, times  = trip_points
     points = list(zip(locs, dists, times))
+
+    matches = route_trip_match.matches(landmarks, trip_points)
+    route_trip_match.humanize_matches_rwgps(matches, trip_struct)
+    log.debug(f"matches: {matches}")
+
+
+
 
     return render_template("analysis.html",
                            trip=trip_struct, route=route_struct,
-                           landmarks=landmarks, trip_points=points,
+                           matches=matches,
                            error=None)
 
 
