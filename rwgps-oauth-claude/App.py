@@ -231,8 +231,12 @@ def analyze_trip():
     log.debug(f"trip_url: {trip_url}\nroute_url: {route_url}\n")
 
     trip_id = trip_url.split("/")[-1]
+    # Could have ?privacy_code=... at end
+    trip_id = trip_id.split("?")[0]
     assert trip_id.isdigit(), f"Don't hack me with a bad URL bro ({trip_url})"
     route_id = route_url.split("/")[-1]
+    # Could have ?privacy_code=... at end
+    route_id = route_id.split("?")[0]
     assert route_id.isdigit(), f"Don't hack me with a bad URL bro ({trip_url})"
 
     try:

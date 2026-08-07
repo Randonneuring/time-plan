@@ -54,7 +54,7 @@ from pykdtree.kdtree import KDTree
 import datetime as dt
 from zoneinfo import ZoneInfo
 import numpy as np
-from haversine import haversine
+from haversine import haversine, Unit as hv_Unit
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -125,6 +125,10 @@ def trip_points_from_rwgps(trip: dict) -> trip_points_t:
 
     # Same pattern for each subsequent point.
     for point in trip["track_points"]:
+        if "y" not in point or "x" not in point or "d" not in point:
+            log.debug(f"Skipping point {point} for missing components")
+            count_skipped += 1
+            continue
         if point["d"] < dist + PAUSE_THRESHOLD_METERS:
             # log.debug(f"Skipping point {point['d']} close to prior distance {dist}")
             count_skipped += 1
@@ -142,7 +146,7 @@ def trip_points_from_rwgps(trip: dict) -> trip_points_t:
 
 """Search parameter constants in meters"""
 MAX_SEGMENT_BONUS = 1000     # Allow up to 1km extra between controls (and more if needed)
-MAX_LANDMARK_MISS = 500      # Match point up to 500 meters from landmark
+MAX_LANDMARK_MISS = 1000     # Match point up to 500 meters from landmark
 NUM_CANDIDATES = 20          # Enough trip points to ensure getting all passages
 
 def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
@@ -167,35 +171,56 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
         # Result is a list of indices into trip_latlons, trip_dists, and trip_times.
         log.debug(f"Candidates for {text} are {candidates}")
 
-        if len(candidates) == 0:
-            entry = {"found": False, "dist": dist, "time": "", "latlon": latlon, "text": text}
-            continue
+        # Set defaults while we know the list is non-empty
+        closest = candidates[0]
+        closest_dist = haversine(latlon, trip_latlons[closest], unit=hv_Unit.METERS)
+        entry = {"found": False, "dist": dist, "time": "", "latlon": latlon,
+                 "text": f"No trip points within {MAX_LANDMARK_MISS} meters of {text}"}
 
-        # Filter out multiple passages to the same landmark by
-        # checking trip distance, in meters
+        # Filtering: We eliminate points for two reasons:
+        # 1. Distance indicates this is not the appropriate
+        #    passage through the point (e.g., out-and-back or
+        #    lollipop course, as well as distinguishing start
+        #    from end of loop course).  Cheap.
+        # 2. Distance is too far from the landmark.  Note LatLon
+        #    used by KD tree is only a rough approximation of distance,
+        #    which requires a more expensive haversine calculation, and
+        #    moreover the k closest points may all be far from the
+        #    landmark, so this could filter more and possibly even
+        #    all the candidate points.
+        
         filtered = []
         bound_low = dist - MAX_LANDMARK_MISS
         bound_high = dist + MAX_LANDMARK_MISS + bonus_meters
+        # First filter on distance.  Separate step because we might
+        # keep all the candidates if we went way off course and racked
+        # up a bunch of bonus meters.
         for candidate in candidates:
             # log.debug(f"Considering candidate {candidate} among {len(trip_dists)}")
             if bound_low <= trip_dists[candidate] <= bound_high:
                 filtered.append(candidate)
+
         if len(filtered) > 0:
             candidates = filtered
 
-        # Although we picked closest candidates using latlon, we should use
-        # haversine distance to choose the closest point.
-        #
-        closest = candidates[0]
-        closest_dist = haversine(latlon, trip_latlons[closest])
+        # Second pass filters on closeness to landmark, while
+        # selecting closest.
+        # Closest, closest_dist, and default entry have been initialized above
+        found = False
         for candidate in candidates:
-            candidate_dist = haversine(latlon, trip_latlons[candidate])
-            if candidate_dist < closest_dist:
-                closest = candidate
-                closest_dist = candidate_dist
-        closest_time = trip_times[closest]
-        entry = {"found": True, "dist": dist, "time": closest_time, "latlon": trip_latlons[closest], "text": text}
-        bonus_meters = max(bonus_meters, trip_dists[candidate] - dist)
+            candidate_latlon = trip_latlons[candidate]
+            candidate_dist_to_landmark = haversine(latlon, candidate_latlon, unit=hv_Unit.METERS)
+            if candidate_dist_to_landmark <= MAX_LANDMARK_MISS:
+                found = True
+                if candidate_dist_to_landmark < closest_dist:
+                    closest = candidate
+                    closest_dist = candidate_dist_to_landmark
+
+        if found:
+            closest_time = trip_times[closest]
+            entry = {"found": True, "dist": dist, "time": closest_time,
+                     "latlon": trip_latlons[closest], "text": f"{text} (within {closest_dist:.2f} meters)"}
+            bonus_meters = max(bonus_meters, trip_dists[candidate] - dist)
         matches.append(entry)
 
     return matches

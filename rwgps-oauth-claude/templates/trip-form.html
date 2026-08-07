@@ -31,14 +31,14 @@
     <label_for trip_url>
         Trip URL:     </label_for>
         <input type="url" name="trip_url"
-            pattern="https://ridewithgps.com/trips/[0-9]+"
+            pattern="https://ridewithgps.com/trips/[0-9]+((\?.*)?)"
                title="Valid URLs look like https://ridewithgps.com/trips/123456789"
                required
         >
     </input>
     <label_for route_url>Route URL:</label_for>
     <input type="url" name="route_url"
-        pattern="https://ridewithgps.com/routes/[0-9]+"
+        pattern="https://ridewithgps.com/routes/[0-9]+((\?.*)?)"
         title="Valid URLs look like https://ridewithgps.com/routes/123456789"
         required>
     </input>
