@@ -11,10 +11,9 @@
   </style>
 </head>
 <body>
-<h1>Route info</h1>
-<p>Route id: {{ route.id }}</p>
-<p>Distance: {{ route.distance }} meters </p>
-<p>Landmarks</p>
+<h1>Times of Passage</h1>
+<p>Route {{ route["id"] }}: {{ route["name"] }}, {{ route["distance"] // 1000 }} km </p>
+<p>{{trip["name"]}} departed {{ trip["departed_at"]}}, {{ trip["distance"] // 1000}} km</p>
 <table>
     <tr>
         <th>Distance</th>
