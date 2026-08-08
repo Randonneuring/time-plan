@@ -57,6 +57,8 @@ import os
 import secrets
 from urllib.parse import urlencode
 
+import flask
+
 import route_trip_match
 
 import requests
@@ -321,9 +323,11 @@ def get_details(item_id: str, item_kind: str):
         log.error(f"Token expired or revoked\n{response.text}")
         session.pop("access_token", None)
         session.pop("refresh_token", None)
+        flask.flash("Your session has expired. Please log in again.")
         raise Exception("Token expired or revoked")
 
     if not response.ok:
+        flask.flash(f"Error fetching {item_kind} details: {response.text}")
         raise Exception(f"RWGPS API error ({response.status_code}): {response.text}")
 
     data = response.json()
