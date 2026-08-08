@@ -23,6 +23,16 @@
     <p class="error">{{ error }}</p>
   {% endif %}
 
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
   {% if has_token %}
     <p>You're connected to Ride With GPS.</p>
     <p>
