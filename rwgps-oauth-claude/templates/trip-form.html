@@ -19,6 +19,17 @@
 </head>
 <body>
 <h1>Time Planner trip and route</h1>
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <p>To match times to a route, both the route and trip must
     be in Ride With GPS and accessible to you.  Open those
     pages in other browser tabs so you can copy their URLs
