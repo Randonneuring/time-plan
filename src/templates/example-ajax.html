@@ -1,0 +1,58 @@
+<label for="url-input">URL:</label>
+<input id="url-input" type="url">
+
+<span id="url-status"></span>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const urlInput = document.getElementById("url-input");
+    const status = document.getElementById("url-status");
+
+    urlInput.addEventListener("blur", checkUrl);
+
+    async function checkUrl() {
+
+        const url = urlInput.value.trim();
+
+        if (url === "") {
+            status.textContent = "";
+            return;
+        }
+
+        status.textContent = "Checking...";
+        status.style.color = "black";
+
+        try {
+
+            const response = await fetch("/check_url", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    url: url
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.valid) {
+                status.textContent = "✓ URL is valid";
+                status.style.color = "green";
+            } else {
+                status.textContent = "✗ " + data.message;
+                status.style.color = "red";
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            status.textContent = "Server error";
+            status.style.color = "red";
+        }
+    }
+
+});
+</script>

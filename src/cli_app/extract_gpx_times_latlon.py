@@ -1,4 +1,9 @@
-"""Extract relevant time-stamps from GPX trace using latitude and longitude"""
+"""Extract relevant time-stamps from GPX trace using latitude and longitude.
+
+The main logic of this has been reworked into flask app in route_trip_match.py.
+This module should be discarded if/when route_trip_match is incorporated in
+a CLI application.   Retained for now just for testing.
+"""
 
 import geopy.distance
 import gpxpy

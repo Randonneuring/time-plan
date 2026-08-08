@@ -55,6 +55,7 @@ you should confirm them against your own client settings and adjust the
 
 import os
 import secrets
+from urllib import response
 from urllib.parse import urlencode
 
 import flask
@@ -95,6 +96,7 @@ RWGPS_REDIRECT_URI = os.environ["RWGPS_REDIRECT_URI"]
 # own account's API client page.
 RWGPS_AUTHORIZE_URL = "https://ridewithgps.com/oauth/authorize"
 RWGPS_TOKEN_URL = "https://ridewithgps.com/oauth/token"
+RWGPS_REVOKE_URL = "https://ridewithgps.com/oauth/revoke"
 RWGPS_API_BASE = "https://ridewithgps.com/api/v1"
 
 
@@ -265,9 +267,6 @@ def analyze_trip():
     route_trip_match.humanize_matches_rwgps(matches, trip_struct)
     log.debug(f"matches: {matches}")
 
-
-
-
     return render_template("analysis.html",
                            trip=trip_struct, route=route_struct,
                            matches=matches,
@@ -281,6 +280,25 @@ def logout():
     RWGPS's side -- it just makes our app forget it. A thorough app would
     also call RWGPS's token revocation endpoint, if one is available.
     """
+    access_token = session.get("access_token")
+    if access_token:
+        token_response = requests.post(
+            RWGPS_REVOKE_URL,
+            data={
+                "token": access_token,
+                "client_id": RWGPS_CLIENT_ID,
+                "client_secret": RWGPS_CLIENT_SECRET,
+            },
+            timeout=10,
+            )
+        if response.ok:
+            flask.flash("Logged out successfully.")
+        else:
+            log.error(f"Error revoking token: {response.text}")
+            flask.flash(f"Error while trying to discard token: {response.text}")
+    else:
+        flask.flash("Already logged out.")
+
     session.clear()
     return redirect(url_for("index"))
 

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns:gpxdata="http://www.cluetrust.com/XML/GPXDATA/1/0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="http://ridewithgps.com/" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.cluetrust.com/XML/GPXDATA/1/0 http://www.cluetrust.com/Schemas/gpxdata10.xsd">
+  <metadata>
+    <name>Smith River 300k / Spring 2026</name>
+    <link href="https://ridewithgps.com/routes/54539112">
+      <text>Smith River 300k / Spring 2026</text>
+    </link>
+    <time>2026-04-06T09:16:47Z</time>
+  </metadata>
+  <rte>
+    <name>Smith River 300k / Spring 2026</name>
+    <rtept lat="44.04333" lon="-123.09274">
+      <name>Control</name>
+      <cmt>Begin at Mandy's 24 hour diner.  Start east  on 15th Ave.  [05:00-06:00]</cmt>
+    </rtept>
+    <rtept lat="44.04332" lon="-123.08819">
+      <name>Left</name>
+      <cmt>Turn left onto High St</cmt>
+    </rtept>
+    <rtept lat="44.0554" lon="-123.08814">
+      <name>Right</name>
+      <cmt>Turn right onto E 4th Ave</cmt>
+    </rtept>
+    <rtept lat="44.05547" lon="-123.08534">
+      <name>Right</name>
+      <cmt>Onto bike path  as 4th curves left, at curb cut</cmt>
+    </rtept>
+    <rtept lat="44.05653" lon="-123.08468">
+      <name>Right</name>
+      <cmt>Right across bike bridge</cmt>
+    </rtept>
+    <rtept lat="44.05772" lon="-123.08292">
+      <name>Left</name>
+      <cmt>Left off bridge toward river</cmt>
+    </rtept>
+    <rtept lat="44.05765" lon="-123.08316">
+      <name>Right</name>
+      <cmt>Right on path  (keep river on left)</cmt>
+    </rtept>
+    <rtept lat="44.09151" lon="-123.11489">
+      <name>Right</name>
+      <cmt>Pass under bridge then loop right to cross bridge</cmt>
+    </rtept>
+    <rtept lat="44.09252" lon="-123.11708">
+      <name>Left</name>
+      <cmt>Turn left toward Owosso Dr</cmt>
+    </rtept>
+    <rtept lat="44.09211" lon="-123.11888">
+      <name>Straight</name>
+      <cmt>Continue onto Owosso Dr</cmt>
+    </rtept>
+    <rtept lat="44.09212" lon="-123.12656">
+      <name>Right</name>
+      <cmt>Turn right onto River Rd</cmt>
+    </rtept>
+    <rtept lat="44.10344" lon="-123.13133">
+      <name>Left</name>
+      <cmt>Left on Irving Rd at light (sign on left)</cmt>
+    </rtept>
+    <rtept lat="44.10325" lon="-123.17219">
+      <name>Straight</name>
+      <cmt>becomes Clear Lake Rd</cmt>
+    </rtept>
+    <rtept lat="44.114275" lon="-123.274591">
+      <name>Generic</name>
+      <cmt>Orchard Point Park on left open dawn to dusk</cmt>
+    </rtept>
+    <rtept lat="44.117959" lon="-123.32616">
+      <name>Straight</name>
+      <cmt>becomes Lawrence Rd</cmt>
+    </rtept>
+    <rtept lat="44.14928" lon="-123.37137">
+      <name>Left</name>
+      <cmt>Left on OR-36 W (Junction City/Mapleton Hwy)</cmt>
+    </rtept>
+    <rtept lat="44.153947" lon="-123.424685">
+      <name>Generic</name>
+      <cmt>Wayside - vault toilets</cmt>
+    </rtept>
+    <rtept lat="44.18945" lon="-123.48441">
+      <name>Summit</name>
+      <cmt>Summit (1038 ft)</cmt>
+    </rtept>
+    <rtept lat="44.173462" lon="-123.581422">
+      <name>Generic</name>
+      <cmt>Wayside: Vault toilets</cmt>
+    </rtept>
+    <rtept lat="44.159643" lon="-123.572993">
+      <name>Generic</name>
+      <cmt>Wayside: Vault toilets</cmt>
+    </rtept>
+    <rtept lat="44.094683" lon="-123.756927">
+      <name>Control</name>
+      <cmt>Deadwood Market [07:21-10:20]</cmt>
+    </rtept>
+    <rtept lat="44.03122" lon="-123.859429">
+      <name>Straight</name>
+      <cmt>merge onto OR-126 W.  Food on left.  Market on left. </cmt>
+    </rtept>
+    <rtept lat="43.9747" lon="-124.10313">
+      <name>Left</name>
+      <cmt>Left on US-101 S (either lane can turn)</cmt>
+    </rtept>
+    <rtept lat="43.974571" lon="-124.103219">
+      <name>Control</name>
+      <cmt>Florence control. 7-11 at turn;   Bikes 101 shop at 1537 8th St open 10-2.  [08:39-13:16]</cmt>
+    </rtept>
+    <rtept lat="43.869604" lon="-124.133864">
+      <name>Generic</name>
+      <cmt>Optional:  R 1.5 miles to beach access</cmt>
+    </rtept>
+    <rtept lat="43.83385" lon="-124.14962">
+      <name>Right</name>
+      <cmt>Right to day use area - Dunes Overlook</cmt>
+    </rtept>
+    <rtept lat="43.83364" lon="-124.15145">
+      <name>Hors Category</name>
+      <cmt>Info control</cmt>
+    </rtept>
+    <rtept lat="43.83385" lon="-124.14962">
+      <name>Right</name>
+      <cmt>Right to continue US-101 S</cmt>
+    </rtept>
+    <rtept lat="43.69874" lon="-124.111409">
+      <name>Control</name>
+      <cmt>Control: Reedsport</cmt>
+    </rtept>
+    <rtept lat="43.69854" lon="-124.1111">
+      <name>Uturn</name>
+      <cmt>Return the way you came on US-101 N</cmt>
+    </rtept>
+    <rtept lat="43.71409" lon="-124.09885">
+      <name>Right</name>
+      <cmt>Lower Smith River Rd</cmt>
+    </rtept>
+    <rtept lat="43.787407" lon="-123.927289">
+      <name>Food</name>
+      <cmt>Smith River Store, open 9 till sometime. Some food and drink.  Top up bottles! </cmt>
+    </rtept>
+    <rtept lat="43.792728" lon="-123.77774">
+      <name>Slight Left</name>
+      <cmt>Bear left to continue on Smith River Rd</cmt>
+    </rtept>
+    <rtept lat="43.82721" lon="-123.677329">
+      <name>Straight</name>
+      <cmt>continue straight onto S Sister Rd  (do not turn right)</cmt>
+    </rtept>
+    <rtept lat="43.848734" lon="-123.562337">
+      <name>Summit</name>
+      <cmt>Oxbow Summit.  Elev 1276ft.  Sketchy descent.</cmt>
+    </rtept>
+    <rtept lat="43.89494" lon="-123.45076">
+      <name>Left</name>
+      <cmt>Left on Wolf Creek Rd</cmt>
+    </rtept>
+    <rtept lat="43.91716" lon="-123.44919">
+      <name>Summit</name>
+      <cmt>elev 1340</cmt>
+    </rtept>
+    <rtept lat="43.96902" lon="-123.35688">
+      <name>Summit</name>
+      <cmt>elev 1061</cmt>
+    </rtept>
+    <rtept lat="43.97864" lon="-123.32377">
+      <name>Left</name>
+      <cmt>Left on Territorial Hwy</cmt>
+    </rtept>
+    <rtept lat="43.98268" lon="-123.32514">
+      <name>Right</name>
+      <cmt>Right on Crow Rd</cmt>
+    </rtept>
+    <rtept lat="44.052032" lon="-123.208542">
+      <name>Food</name>
+      <cmt>Jackson's mini-mart on right</cmt>
+    </rtept>
+    <rtept lat="44.06361" lon="-123.20843">
+      <name>Right</name>
+      <cmt>Right into Meadowlark Park</cmt>
+    </rtept>
+    <rtept lat="44.064549" lon="-123.20805">
+      <name>Right</name>
+      <cmt>Enter path at end of lot; parallels road</cmt>
+    </rtept>
+    <rtept lat="44.06999" lon="-123.20755">
+      <name>Right</name>
+      <cmt>Right at T in path</cmt>
+    </rtept>
+    <rtept lat="44.06368" lon="-123.19322">
+      <name>Right</name>
+      <cmt>bear right at fork; signs for Downtown, cross canal</cmt>
+    </rtept>
+    <rtept lat="44.05205" lon="-123.18704">
+      <name>Left</name>
+      <cmt>left  onto Terry St</cmt>
+    </rtept>
+    <rtept lat="44.05205" lon="-123.18627">
+      <name>Right</name>
+      <cmt>right onto Fern Ridge Trail.   Following canal, using all underpasses.</cmt>
+    </rtept>
+    <rtept lat="44.046349" lon="-123.14254">
+      <name>Left</name>
+      <cmt>Left after crossing bridge</cmt>
+    </rtept>
+    <rtept lat="44.04613" lon="-123.12787">
+      <name>Left</name>
+      <cmt>dog leg L/R at City View (unsigned, follow trail arrows)</cmt>
+    </rtept>
+    <rtept lat="44.04227" lon="-123.11254">
+      <name>Right</name>
+      <cmt>Polk St dog-leg R/L to continue path</cmt>
+    </rtept>
+    <rtept lat="44.04197" lon="-123.10948">
+      <name>Straight</name>
+      <cmt>onto W 16th Ave</cmt>
+    </rtept>
+    <rtept lat="44.04192" lon="-123.10552">
+      <name>Straight</name>
+      <cmt>onto Fern Ridge Trail</cmt>
+    </rtept>
+    <rtept lat="44.04308" lon="-123.10222">
+      <name>Left</name>
+      <cmt>dog-leg L/R onto 15th
+ Gravel in corner. </cmt>
+    </rtept>
+    <rtept lat="44.04333" lon="-123.09274">
+      <name>Right</name>
+      <cmt>Turn right onto Willamette St</cmt>
+    </rtept>
+    <rtept lat="44.04266" lon="-123.09273">
+      <name>End</name>
+      <cmt>End of route</cmt>
+    </rtept>
+  </rte>
+</gpx>

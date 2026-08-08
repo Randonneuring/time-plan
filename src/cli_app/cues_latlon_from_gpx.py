@@ -1,5 +1,10 @@
 """Extract waypoints (rtept objects) from a GPX file.
 
+Status:  Not currently used in flask app.
+Could be useful if the main logic is reused as a CLI app.  In that case,
+we would want to make the returned object closer to the form that we
+extract from the RWGPS API.
+
 In RWGPS, a 'route' is different from a 'track'. A 'route' contains
 all the labeled points and not all the breadcrumbs between.  In a route,
 we can find rtept entries that will include landmarks like summits and

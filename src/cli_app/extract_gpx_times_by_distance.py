@@ -1,4 +1,10 @@
-"""Extract relevant time-stamps from GPX trace"""
+"""Extract relevant time-stamps from GPX trace
+
+Status:  Not currently used in flask app.
+Could be useful if the main logic is reused as a CLI app.  In that case,
+we would want to make the returned object closer to the form that we
+extract from the RWGPS API.
+"""
 
 import geopy.distance
 import gpxpy
