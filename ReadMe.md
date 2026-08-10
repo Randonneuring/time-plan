@@ -2,18 +2,17 @@
 
 Tools for creating simple time plans for brevets.
 
+Currently one tool, a web app to extract times of passage
+from Ride with GPS records of a prior ride and a route.
 
-## Based on a prior ride
+Future plans:  
+   - CLI versions that extract times from GPX files.
+   - Export in CSV and XLSX formats
+   - Flexible selection of what route information to include,
+        - all cues
+        - selected waypoints and non-directional cues (current version)
 
-Extract useful information from a timestamped GPS track in GPX
-format, such as can be downloaded from RWGPS.
 
-Inputs: 
-- GPX track  (must have time stamps)
-- CSV of waypoints for which time is wanted
-
-Output: 
-- CSV of waypoints with elapsed time and time of day
 
 
 
