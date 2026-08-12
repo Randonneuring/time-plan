@@ -356,4 +356,4 @@ def get_details(item_id: str, item_kind: str):
 if __name__ == "__main__":
     # debug=True gives you helpful error pages during development.
     # Never run with debug=True in production.
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5475)
