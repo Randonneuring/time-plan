@@ -5,32 +5,32 @@
     <title>Analysis</title>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; line-height: 1.5; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px;}
+    tr:nth-child(even) {background-color: #fffff0; vertical-align: top;}
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;}
     .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
 <h1>Times of Passage</h1>
-<p>Route {{ route["id"] }}: {{ route["name"] }}, {{ route["distance"] // 1000 }} km </p>
+<p>Route  {{ route["name"] }}, {{ route["distance"] // 1000 }} km </p>
 <p>{{trip["name"]}} departed {{ trip["departed_at"]}}, {{ trip["distance"] // 1000}} km</p>
 <table>
     <tr>
-        <th>Distance</th>
+        <th>Distance</th> <th>&nbsp;</th>
+        <th>Time</th> <th>(elapsed)</th>
         <th>Info</th>
     </tr>
     {% for m in matches %}
         <tr>
-            <td> {{ m["dist_km"] | round(1) }}km ({{ m["dist_mi"] | round(1) }}mi) </td>
-            <td> {{ m["time_local"] }} (T+{{m["time_elapsed"]}})</td>
+            <td> {{ m["dist_km"] | round(1) }}km </td>
+            <td>{{ m["dist_mi"] | round(1) }}mi </td>
+            <td> {{ m["time_local"] }}</td>
+            <td>({{m["time_elapsed"]}})</td>
             <td> {{ m["text"] }} </td>
         </tr>
     {% endfor %}
 </table>
-
-
-
-<p>First recorded time: {{ trip.track_points[0].t }}</p>
 
 </body>
 </html>

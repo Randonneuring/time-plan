@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-<h1>Time Planner trip and route</h1>
+<h1>Times of Passage</h1>
 
   {% with messages = get_flashed_messages() %}
   {% if messages %}
@@ -35,8 +35,6 @@
     pages in other browser tabs so you can copy their URLs
     to paste below.
 </p>
-<p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
-<p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
 
 <form method="post" action="analyze_trip">
     <label_for trip_url>
@@ -44,15 +42,36 @@
         <input type="url" name="trip_url"
             pattern="https://ridewithgps.com/trips/[0-9]+((\?.*)?)"
                title="Valid URLs look like https://ridewithgps.com/trips/123456789"
+               size="60"
                required
         >
+    <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
     </input>
     <label_for route_url>Route URL:</label_for>
     <input type="url" name="route_url"
         pattern="https://ridewithgps.com/routes/[0-9]+((\?.*)?)"
         title="Valid URLs look like https://ridewithgps.com/routes/123456789"
+           size="60"
         required>
     </input>
+    <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
+
+
+    <p>Waypoints and special cues on the route are always included.  What else?</p>
+
+    <div>
+        <input type="checkbox" name="cues"/>
+        <label for="cues">Include turn cues?</label><br />
+        <input type="checkbox" name="miles_5" checked/>
+        <label for="miles_5">5 mile intervals?</label><br />
+        <input type="checkbox" name="miles_10"/>
+        <label for="miles_10">10 mile intervals?</label><br />
+        <input type="checkbox" name="km_10"/>
+        <label for="km_10">10 km intervals?</label><br />
+    </div>
+
+    <br />
+
     <input type="submit" value="Submit">
 </form>
 

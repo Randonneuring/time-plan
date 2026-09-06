@@ -62,9 +62,19 @@ log = logging.getLogger(__name__)
 
 DIRECTIONAL_CUES = set(["Left", "Right", "Slight Left", "Slight Right", "Sharp Left", "Sharp Right",
                         "Straight", "Uturn"])
-INFO_NOT_LANDMARK = set(["Danger", "Caution", "Food", "Water", "Information"])
+INFO_NOT_LANDMARK = set(["Danger", "Caution"])
 IGNORE_CUES = DIRECTIONAL_CUES | INFO_NOT_LANDMARK
+
+# Have we paused or are we still moving?   GPS coordinates can
+# wander by small amounts while we are paused.  This is used to
+# remove redundant readings from the trace.
 PAUSE_THRESHOLD_METERS = 5
+
+# For distinguishing arrival from departure times, we need a
+# wider margin, because the point we paused might not be precisely
+# the closest to the landmark in the route (e.g., at an open control
+# where the rider can choose different establishments for refueling).
+
 
 # The trip points structure is a triple of parallel arrays.  The first
 # list is lat/lon pairs, the second is integer distances in meters, the third
@@ -81,25 +91,104 @@ trip_points_t = tuple[list[tuple[float, float]], list[int], list[int]]
 route_points_t = list[tuple[tuple[float, float], float, str]]
 #                     latlon                          dist         textual description
 
-def route_points_from_rwgps(route: dict) -> route_points_t:
+def route_points_from_rwgps(route: dict, options: dict[str, bool]) -> route_points_t:
     """Extract the route points from a route object returned by the RWGPS API"""
+    # Cues: At least controls, sometimes also turns
+    ignore = set() if options["cues"] else IGNORE_CUES
+    result = cues_from_rwgps(route, ignore)
+    # Include landmarks with distances (that is, POIs that are on course)
+    waypoints = waypoints_from_rwgps(route)
+    result += waypoints
+    # Selected mileposts
+    if options["miles_5"]:
+        probes = miles_meters_probe_points(5, route["distance"])
+        result += mileposts_from_rwgps(route, probes)
+    elif options["miles_10"]:
+        probes = miles_meters_probe_points(10, route["distance"])
+        result += mileposts_from_rwgps(route, probes)
+    return sorted(result, key=lambda x: x[1])
+
+
+def cues_from_rwgps(route: dict, ignore: set[str]) -> route_points_t:
+    """Extract selected cues"""
     result = []
     # Include cues but excluding directional cues & some info cues
     course_points = route.get("course_points", [])
     assert course_points, "No course points in route"
+    log.debug(f"Route has {len(course_points)} course points")
+
     for point in course_points:
-        if point["t"] not in IGNORE_CUES:
-            log.debug(f"Keeping cue of type |{point['t']}| at distance {point['d']}")
+        log.debug(f"Considering course point {point}")
+        if point["t"] not in ignore:
+            log.debug(f"Keeping course point of type |{point['t']}| at distance {point['d']}")
             text = f"({point['t']}) {point['n']}"
             result.append(((point["y"], point["x"]), point["d"], text ))
-    # Include landmarks with distances (that is, POIs that are on course)
+        else:
+            log.debug(f"Ignoring cue of type |{point['t']}| at distance {point['d']}")
+    return result
+
+METERS_PER_MILE = 1609.344
+
+def miles_meters_probe_points(mile_intervals: int, total_meters: int) -> list[int]:
+    """Meters distances corresponding to mile intervals."""
+    probes   = []
+    start_milepost = mile_intervals * METERS_PER_MILE  # Start mileposts here
+    stop_milepost = total_meters - mile_intervals * METERS_PER_MILE  # Stop before here
+    current_mile = mile_intervals
+    current_meters = start_milepost
+    while current_meters <= stop_milepost:
+        probes.append(current_meters)
+        current_mile += mile_intervals
+        current_meters += mile_intervals * METERS_PER_MILE
+    return probes
+
+def mileposts_from_rwgps(route: dict, probes: list[int]) -> route_points_t:
+    """Given a route and a list of meter distance probes, return a list of
+    synthetic route points ((lat, lon), distance, text) as if they were
+    cues or waypoints.  We use track_points rather than course_points so that we
+    are following the route between turns.
+    """
+    result = []
+    track_points = route.get("track_points", [])
+    assert track_points, "No course points in route"
+    course_index = 1  # We need to be able to index *prior* point
+    for probe in probes:
+        while course_index < len(track_points) and track_points[course_index]["d"] < probe:
+            course_index += 1
+        # Now course index is first point with distance >= probe
+        lat_before, lon_before = track_points[course_index - 1]["y"], track_points[course_index - 1]["x"]
+        lat_after, lon_after = track_points[course_index]["y"], track_points[course_index]["x"]
+        dist_before = track_points[course_index - 1]["d"]
+        dist_after = track_points[course_index]["d"]
+        text = "Milepost"
+        lat = interpolate(dist_before, probe, dist_after, lat_before, lat_after)
+        lon = interpolate(dist_before, probe, dist_after, lon_before, lon_after)
+        result.append(((lat, lon), probe, text))
+    return result
+
+
+
+
+def interpolate(x_before: int, x_probe: int, x_after: int, y_before: float, y_after: float) -> float:
+    """Linear interpolation between two points"""
+    return y_before + (x_probe - x_before) * (y_after - y_before) / (x_after - x_before)
+
+
+def waypoints_from_rwgps(route: dict) -> route_points_t:
+    """Waypoints are POIs associated with distances on route"""
+    result = []
     pois = route.get("points_of_interest", [])
+    log.debug(f"Route has {len(pois)} POIs")
     for point in pois:
         if point.get("distances", []) and point.get("type_name", "") not in INFO_NOT_LANDMARK:
             # This is a POI that is on the course
+            log.debug(f"Keeping POI {point['name']} of type {point['type_name']}")
             text = f"({point['type_name']}) {point['name']}"
             result.append(((point["lat"], point["lng"]), point["distances"][0], text))
-    return sorted(result, key=lambda x: x[1])
+        else:
+            log.debug(f"Ignoring POI {point['name']} of type {point['type_name']}\n {point}")
+    return result
+
 
 def trip_points_from_rwgps(trip: dict) -> trip_points_t:
     """Extract the trip points from a trip object returned by the RWGPS API.
@@ -218,12 +307,43 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
 
         if found:
             closest_time = trip_times[closest]
+            arrival_time, depart_time = time_paused(trip, closest)
             entry = {"found": True, "dist": dist, "time": closest_time,
+                     "arrival_time": arrival_time, "departure_time": depart_time,
                      "latlon": trip_latlons[closest], "text": f"{text} (within {closest_dist:.2f} meters)"}
             bonus_meters = max(bonus_meters, trip_dists[candidate] - dist)
         matches.append(entry)
 
     return matches
+
+def time_paused(trip: trip_points_t, closest: int) -> tuple[int, int]:
+    """Given one 'closest' point, look back and forward to find time
+    paused within delta meters of that point, returning both as
+    unix epoch seconds.
+    """
+    EPSILON = 500 # Meters that GPS can wander
+    trip_latlons, trip_dists, trip_times = trip
+    first = closest
+    first_time = trip_times[first]
+    while first > 0:
+        deviation = haversine(trip_latlons[first], trip_latlons[closest], unit=hv_Unit.METERS)
+        if deviation <= EPSILON:
+            first_time = trip_times[first]
+            first -= 1
+        else:
+            break
+    last = closest
+    last_time = trip_times[last]
+    while last < len(trip_times) - 1:
+        deviation = haversine(trip_latlons[last], trip_latlons[closest], unit=hv_Unit.METERS)
+        if deviation <= EPSILON:
+            last_time = trip_times[last]
+            last += 1
+        else:
+            break
+
+    return first_time, last_time
+
 
 def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
     """Decorate each match struct with human-readable text and time stamp.

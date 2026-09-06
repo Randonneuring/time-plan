@@ -80,9 +80,16 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# Force Flask to explicitly bound cookies to unencrypted local development addresses
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_DOMAIN'] = None  # Prevents locking to a specific host variant
+
 # Flask uses this key to cryptographically sign the session cookie so users
 # can't tamper with it. In a real app, set this to a long random value via
 # an environment variable, never hardcode it.
+log.debug(f"FLASK_SECRET_KEY: {os.environ['FLASK_SECRET_KEY']}")
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
 RWGPS_CLIENT_ID = os.environ["RWGPS_CLIENT_ID"]
@@ -126,6 +133,7 @@ def login():
     # compare it against what RWGPS sends back in /callback.
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
+    log.debug(f"Storing state in session: {state}")
 
     query_params = {
         "client_id": RWGPS_CLIENT_ID,
@@ -138,9 +146,16 @@ def login():
         # it supports.
         # "scope": "read",
     }
+    log.debug(f"query_params: {query_params}")
     authorize_url = f"{RWGPS_AUTHORIZE_URL}?{urlencode(query_params)}"
-    return redirect(authorize_url)
-
+    resp = redirect(authorize_url)
+    log.debug(
+        "Set-Cookie: %s",
+        resp.headers.getlist("Set-Cookie")
+    )
+    log.debug(f"session.modified={session.modified}")
+    log.debug(f"session={dict(session)}")
+    return resp
 
 @app.route("/rwgps_auth_callback")
 def callback():
@@ -159,8 +174,10 @@ def callback():
                                 error=f"Authorization failed: {error}")
 
     # --- CSRF check: does the returned state match what we sent? ---
+    log.debug(f"Session at callback start: {dict(session)}")
     returned_state = request.args.get("state")
-    expected_state = session.pop("oauth_state", None)
+    expected_state = session.get("oauth_state", None)
+    log.debug(f"Expected state: |{expected_state}| vs returned state |{returned_state}|")
     if not returned_state or returned_state != expected_state:
         return render_template("index.html", has_token=False,
                                 error="State mismatch -- possible CSRF attempt. Please try again.")
@@ -255,8 +272,25 @@ def analyze_trip():
     # log.debug(f"Route structure: {route_struct}")
     # log.debug(f"Route structure attributes: {route_struct.keys()}\nTrip structure attributes: {trip_struct.keys()}\n")
 
+    """Form data: 
+        <input type="checkbox" name="cues"/>
+        <label for="cues">Include turn cues?</label><br />
+        <input type="checkbox" name="miles_5" checked/>
+        <label for="miles_5">5 mile intervals?</label><br />
+        <input type="checkbox" name="miles_10"/>
+        <label for="miles_10">10 mile intervals?</label><br />
+        <input type="checkbox" name="km_10"/>
+        <label for="km_10">10 km intervals?</label><br />
+    """
+    options = {}
+    options["cues"] = request.form.get("cues", False)
+    options["miles_5"] = request.form.get("miles_5", False)
+    options["miles_10"] = request.form.get("miles_10", False    )
+    options["km_10"] = request.form.get("km_10", False)
     # log.debug(f"Route points: {route_trip_match.route_points_from_rwgps(route_struct)}")
-    landmarks = route_trip_match.route_points_from_rwgps(route_struct)
+    landmarks = route_trip_match.route_points_from_rwgps(route_struct, options)
+    #  Enrich landmarks according to options in the form:
+    #   May include turn cues, mile/km markers
     trip_points = route_trip_match.trip_points_from_rwgps(trip_struct)
 
     # For debugging purposes, we want to turn the parallel arrays of trip
@@ -357,3 +391,7 @@ if __name__ == "__main__":
     # debug=True gives you helpful error pages during development.
     # Never run with debug=True in production.
     app.run(debug=True, port=5475)
+else:
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(logging.DEBUG)  # Explicitly allow DEBUG logs
