@@ -17,17 +17,21 @@
 <p>{{trip["name"]}} departed {{ trip["departed_at"]}}, {{ trip["distance"] // 1000}} km</p>
 <table>
     <tr>
-        <th>Distance</th> <th>&nbsp;</th>
+        <th>Type</th>
+        <th>Dist km</th> <th>mi</th>
         <th>Time</th> <th>(elapsed)</th>
         <th>Info</th>
+        <th>+/-m</th>
     </tr>
     {% for m in matches %}
         <tr>
-            <td> {{ m["dist_km"] | round(1) }}km </td>
-            <td>{{ m["dist_mi"] | round(1) }}mi </td>
+            <td> {{ m["kind"] }} </td>
+            <td> {{ m["dist_km"] | round(1) }} </td>
+            <td>{{ m["dist_mi"] | round(1) }} </td>
             <td> {{ m["time_local"] }}</td>
             <td>({{m["time_elapsed"]}})</td>
             <td> {{ m["text"] }} </td>
+            <td> {{ m["deviation"] | round(0)}} </td>
         </tr>
     {% endfor %}
 </table>
