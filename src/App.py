@@ -111,6 +111,10 @@ RWGPS_API_BASE = "https://ridewithgps.com/api/v1"
 # Routes
 # ---------------------------------------------------------------------------
 
+
+# ------------------------------
+# Oauth protocol for logging in
+# ------------------------------
 @app.route("/")
 def index():
     """
@@ -228,18 +232,33 @@ def callback():
     # store it in the Flask session.
     session["access_token"] = token_data["access_token"]
     session["refresh_token"] = token_data.get("refresh_token")
-    return redirect(url_for("trip_form"))
+    return redirect(url_for("form_analyze_trip_get"))
 
-@app.route("/trip_form")
-def trip_form():
-    """After authorization, or if we are already logged in, show a form"""
-    return render_template("trip-form.html")
+# ------------------------------
+#  The application proper, after OAuth authorization
+# ------------------------------
 
+"""
+URL name scheme for form-handling: 
+   /form_xxx_get  present the form   (GET only)
+   /form_xxx_respond  handles the form submission  (POST only)
+   templates/form_xxx.html the form
+   
+"""
 
+#####
+#  Analyzing a trip.
+#  Form has entries for route URL, trip URL, and options like
+#    whether to include directional cues or mile markers.
+#####
 
+@app.route("/form_analyze_trip_get", methods=["GET"])
+def form_analyze_trip_get ():
+    """After authorization, enter trip and route URLs and options for analysis"""
+    return render_template("form_analyze_trip.html")
 
-@app.route("/analyze_trip", methods=["POST"])
-def analyze_trip():
+@app.route("/form_analyze_trip_respond", methods=["POST"])
+def form_analyze_trip_respond():
     """We should get here from a form that provides URLs
     for the route and trip.   We need to extract the route and trip ID
     (integer strings) from the URLs.  We can't assume they are valid,
@@ -269,18 +288,9 @@ def analyze_trip():
         log.error(f"Error getting trip or route details: {e}")
         return redirect(url_for("index"))
 
-    # log.debug(f"Route structure: {route_struct}")
-    # log.debug(f"Route structure attributes: {route_struct.keys()}\nTrip structure attributes: {trip_struct.keys()}\n")
-
     """Form data: 
-        <input type="checkbox" name="cues"/>
-        <label for="cues">Include turn cues?</label><br />
-        <input type="checkbox" name="miles_5" checked/>
-        <label for="miles_5">5 mile intervals?</label><br />
-        <input type="checkbox" name="miles_10"/>
-        <label for="miles_10">10 mile intervals?</label><br />
-        <input type="checkbox" name="km_10"/>
-        <label for="km_10">10 km intervals?</label><br />
+    Check boxes: "cues", "miles_5", "miles_10", "km_10"
+    Input fields (text):  route_url, trip_url
     """
     options = {}
     options["cues"] = request.form.get("cues", False)
@@ -306,6 +316,50 @@ def analyze_trip():
                            matches=matches,
                            error=None)
 
+#####
+#  Search for a trip.  This is a side-trip from the trip analysis
+#     form, so that one can do the RWGPS search right in the app.
+#  Two forms here:  one for the search, generating a list of candidate trips,
+#     and one for selecting a trip from the list.
+#  User can filter by name (partial match) and distance
+#####
+
+@app.route("/form_search_trips_get", methods=["GET"])
+def form_search_trips_get():
+    """User on trip form wants to search for a suitable trip"""
+    return render_template("form_search_trips.html")
+
+
+@app.route("/form_search_trips_respond", methods=["POST"])
+def form_search_trips_respond():
+    """User has filled the search form to find a trip."""
+    trip_name = request.form.get("trip_name", "")
+    min_km_field = request.form.get("min_km", "")
+    if min_km_field.isdigit():
+        min_km = int(min_km_field)
+    else:
+        min_km = 0
+    max_km_field = request.form.get("max_km", "")
+    if max_km_field.isdigit():
+        max_km = int(max_km_field)
+    else:
+        max_km = 0  # Treat 0 as "any"
+    trips = get_trips(trip_name, min_km, max_km)
+    return render_template("form_select_trip.html", trips=trips)
+
+@app.route("/form_select_trip_respond", methods=["POST"])
+def form_select_trip_respond():
+    """User has selected a trip from the list of candidate trips.
+    Place it into session and redirect to trip analysis form.
+    """
+    trip_id = request.form.get("trip_id", "")
+    log.debug(f"trip_id: {trip_id}")
+    # FIXME: save in session
+    return redirect(url_for("form_analyze_trip_get"))
+
+#####
+# Logout discards session data
+#####
 
 @app.route("/logout")
 def logout():
@@ -345,6 +399,46 @@ def logout():
 # that must be handled in the routed functions (e.g.,
 # by redirecting to the index page with an error message)
 # =================================
+
+def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
+    """Obtain list of trips from RWGPS API."""
+    access_token = session.get("access_token")
+    if not access_token:
+        log.error("No access token in session")
+        raise Exception("No access token in session")
+    log.debug(f"Accessing trip list\naccess_token: {access_token} (valid)\n")
+
+    # Authenticated API calls pass the access token in the Authorization
+    # header, using the "Bearer" scheme -- this is standard OAuth2.
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    payload = {}
+    if trip_name: payload["name"] = trip_name
+    if min_km: payload["min_km"] = min_km
+    if max_km: payload["max_km"] = max_km
+
+    response = requests.get(
+        f"{RWGPS_API_BASE}/trips.json",
+        headers=headers, params=payload,
+        timeout=10,
+    )
+
+    if response.status_code == 401:
+        # The token expired or was revoked. A production app would try to
+        # use the refresh_token here to get a new access_token. For this
+        # demo, we just send the user back to log in again.
+        log.error(f"Token expired or revoked\n{response.text}")
+        session.pop("access_token", None)
+        session.pop("refresh_token", None)
+        flask.flash("Your session has expired. Please log in again.")
+        raise Exception("Token expired or revoked")
+
+    if not response.ok:
+        flask.flash(f"Error fetching trip list: {response.text}")
+        raise Exception(f"RWGPS API error ({response.status_code}): {response.text}")
+
+    data = response.json()
+    return data["trips"]
 
 
 def get_details(item_id: str, item_kind: str):

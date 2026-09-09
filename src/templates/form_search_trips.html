@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search for trips</title>
+</head>
+<body>
+<h1>Search for RWGPS Trips</h1>
+
+<form action="{{ url_for('form_search_trips_respond') }}" method="post">
+  <label for="trip_name">Name (partial match):</label>
+  <input type="text" id="trip_name" name="trip_name">
+  <br />
+  <label for="min_km">Min km:</label>
+  <input type="number" id="min_km" name="min_km" value="0">
+  <label for="max_km">Max km:</label>
+  <input type="number" id="max_km" name="max_km" value="10000">
+  <input type="submit" value="Search">
+</form>
+</body>
+</html>
