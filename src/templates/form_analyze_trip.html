@@ -43,13 +43,17 @@
 
 <form method="post" action="form_analyze_trip_respond">
     <label_for trip_url>
+        <a href="{{ url_for('form_search_trips_get') }}" class="button">Search trips</a>
         Trip URL:     </label_for>
         <input type="url" name="trip_url"
             pattern="(https://ridewithgps.com/trips/)?[0-9]+((\?.*)?)"
                title="Valid URLs look like https://ridewithgps.com/trips/123456789"
-               size="60"
+               value="{{session.get('trip_url', '')}}"
+               size="50"
                required
         >
+
+    </input>
     <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
     </input>
     <label_for route_url>Route URL:</label_for>
@@ -60,7 +64,7 @@
         required>
     </input>
     <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
-    <a href="{{ url_for('form_search_trips_get') }}" class="button">Search for a trip</a>
+
 
     <p>Waypoints and special cues on the route are always included.  What else?</p>
 

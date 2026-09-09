@@ -335,11 +335,12 @@ def form_search_trips_respond():
     """User has filled the search form to find a trip."""
     trip_name = request.form.get("trip_name", "")
     min_km_field = request.form.get("min_km", "")
+    max_km_field = request.form.get("max_km", "")
+    log.debug(f"Search for trip_name: {trip_name} min_km: {min_km_field} max_km: {max_km_field}")
     if min_km_field.isdigit():
         min_km = int(min_km_field)
     else:
         min_km = 0
-    max_km_field = request.form.get("max_km", "")
     if max_km_field.isdigit():
         max_km = int(max_km_field)
     else:
@@ -353,8 +354,10 @@ def form_select_trip_respond():
     Place it into session and redirect to trip analysis form.
     """
     trip_id = request.form.get("trip_id", "")
-    log.debug(f"trip_id: {trip_id}")
-    # FIXME: save in session
+    if trip_id.isdigit():
+        trip_url = f"https://ridewithgps.com/trips/{trip_id}"
+        log.debug(f"trip: {trip_url}")
+        session["trip_url"] = trip_url  # Accessible to form_analyze_trip
     return redirect(url_for("form_analyze_trip_get"))
 
 #####
@@ -414,8 +417,9 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
 
     payload = {}
     if trip_name: payload["name"] = trip_name
-    if min_km: payload["min_km"] = min_km
-    if max_km: payload["max_km"] = max_km
+    if min_km: payload["distance_min"] = min_km * 1000
+    if max_km: payload["distance_max"] = max_km * 1000
+    log.debug(f"Trip search payload: {payload}")
 
     response = requests.get(
         f"{RWGPS_API_BASE}/trips.json",

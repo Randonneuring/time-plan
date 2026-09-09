@@ -18,11 +18,13 @@
         <legend>Select trip to analyze</legend>
         <div>
             {% for trip in trips %}
-                <input type="radio" id="{{trip['id']}}" name="trip_id" value="{{trip['url']}}">
+                <input type="radio" id="{{trip['id']}}" name="trip_id" value="{{trip['id']}}">
                 <label for="{{trip['id']}}">
                     {{trip['departed_at']}}
                     {{trip['name']}}
                     {{trip['distance'] // 1000}} km
+                    (<a href="https://ridewithgps.com/trips/{{trip['id']}}"
+                        target="rwgps-inspect">?</a>)
                 </label><br>
             {% endfor %}
         </div>
