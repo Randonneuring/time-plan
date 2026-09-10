@@ -1,0 +1,42 @@
+
+    body {
+        font-family: system-ui, sans-serif;
+        max-width: 100em;
+        margin: 30px;
+        line-height: 1.5;
+        background-color: beige;
+        background-image: url("rwgps-map.jpg");
+        background-attachment: fixed;
+        color: black;
+        }
+
+    div.main-content {
+        padding: 20px;
+        border-radius: 30px;
+        inset: 30px;
+        height: 95%;
+        width: 95%;
+        background-color: rgb(255 255 255 / 90%);
+    }
+
+    .button {
+      display: inline-block;
+      background: #fffff0;
+      color: black; border: 1px solid blue;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px;}
+    tr:nth-child(even) {background-color: #fffff0; vertical-align: top;}
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;}
+    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
+
+      input:invalid {
+        border: 2px dashed red;
+      }
+
+      input:valid {
+        border: 2px solid black;
+      }

@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Analysis</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; line-height: 1.5; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px;}
-    tr:nth-child(even) {background-color: #fffff0; vertical-align: top;}
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;}
-    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
-  </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='time-plan.css') }}">
 </head>
 <body>
+<div class="container"></div>
+<div class="main-content">
 <h1>Times of Passage</h1>
 <p>Route  {{ route["name"] }}, {{ route["distance"] // 1000 }} km </p>
 <p>Ridden as {{trip["name"]}} on {{ trip["departed_at"] | iso_to_date }}, {{ trip["distance"] // 1000}} km</p>
@@ -38,6 +34,6 @@
         </tr>
     {% endfor %}
 </table>
-
+ </div></div>
 </body>
 </html>

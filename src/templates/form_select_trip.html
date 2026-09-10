@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Select trip for analysis</title>
-    <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 30px auto; line-height: 1.5; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px;}
-    tr:nth-child(even) {background-color: #fffff0; vertical-align: top;}
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;}
-    .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
-  </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='time-plan.css') }}">
 </head>
 <body>
+<div class="container">
+<div class="main-content">
 <h1>Select trip for analysis</h1>
 <form action="{{ url_for('form_select_trip_respond') }}" method="post">
     <fieldset>
@@ -32,6 +28,6 @@
     <button type="submit">Submit</button>
 </form>
 
-
+</div></div>
 </body>
 </html>
