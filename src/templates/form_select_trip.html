@@ -20,7 +20,7 @@
             {% for trip in trips %}
                 <input type="radio" id="{{trip['id']}}" name="trip_id" value="{{trip['id']}}">
                 <label for="{{trip['id']}}">
-                    {{trip['departed_at']}}
+                    {{trip['departed_at'] | iso_to_date }}
                     {{trip['name']}}
                     {{trip['distance'] // 1000}} km
                     (<a href="https://ridewithgps.com/trips/{{trip['id']}}"

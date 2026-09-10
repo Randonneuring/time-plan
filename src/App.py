@@ -65,6 +65,7 @@ import route_trip_match
 import requests
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, session, url_for, jsonify
+import datetime as dt
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -438,6 +439,15 @@ def logout():
 
     session.clear()
     return redirect(url_for("index"))
+
+# =================================
+# Functions called from Jinja templates,
+# especially for formatting
+# ==================================
+@app.template_filter("iso_to_date")
+def iso_to_date(iso_date: str) -> str:
+    """Convert ISO date string to human-readable date string"""
+    return dt.datetime.fromisoformat(iso_date).strftime("%Y %m/%d")
 
 # =================================
 # Unrouted functions (called by functions for templates).
