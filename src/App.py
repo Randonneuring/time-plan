@@ -447,7 +447,7 @@ def logout():
 @app.template_filter("iso_to_date")
 def iso_to_date(iso_date: str) -> str:
     """Convert ISO date string to human-readable date string"""
-    return dt.datetime.fromisoformat(iso_date).strftime("%Y %m/%d")
+    return dt.datetime.fromisoformat(iso_date).strftime("%Y-%m-%d")
 
 # =================================
 # Unrouted functions (called by functions for templates).

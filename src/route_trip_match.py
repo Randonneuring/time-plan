@@ -186,10 +186,10 @@ def mileposts_from_rwgps(route: dict, probes: list[int]) -> route_points_t:
         lat_after, lon_after = track_points[course_index]["y"], track_points[course_index]["x"]
         dist_before = track_points[course_index - 1]["d"]
         dist_after = track_points[course_index]["d"]
-        text = "-"
+        text = ""
         lat = interpolate(dist_before, probe, dist_after, lat_before, lat_after)
         lon = interpolate(dist_before, probe, dist_after, lon_before, lon_after)
-        result.append(((lat, lon), probe, text, "Mark"))
+        result.append(((lat, lon), probe, text, "Δ"))
     return result
 
 

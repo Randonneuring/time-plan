@@ -41,20 +41,15 @@
 {% endwith %}
 
 
-<form method="post" action="form_analyze_trip_respond">
-    <label_for trip_url>
-        <a href="{{ url_for('form_search_trips_get') }}" class="button">Search trips</a>
-        Trip URL:     </label_for>
-        <input type="url" name="trip_url"
-            pattern="(https://ridewithgps.com/trips/)?[0-9]+((\?.*)?)"
-               title="Valid URLs look like https://ridewithgps.com/trips/123456789"
-               value="{{session.get('trip_url', '')}}"
-               size="45"
-               required
-        >
+<p>We need URLs or ID numbers for a  <em>Route</em> and a <em>Trip</em> from Ride with GPS
+(not Strava, Garmin, or other services.)  You can cut-and-paste URLs from
+    other browser tabs, or use the search functions to find <em>your own</em>
+    Ride with GPS entries.
+</p>
 
-    </input>
-    <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
+<form method="post" action="form_analyze_trip_respond">
+
+
     </input>
     <label_for route_url>
         <a href="{{ url_for('form_search_routes_get') }}" class="button">Search routes</a>
@@ -69,14 +64,28 @@
     <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
 
 
+    <label_for trip_url>
+        <a href="{{ url_for('form_search_trips_get') }}" class="button">Search trips</a>
+        Trip URL:     </label_for>
+        <input type="url" name="trip_url"
+            pattern="(https://ridewithgps.com/trips/)?[0-9]+((\?.*)?)"
+               title="Valid URLs look like https://ridewithgps.com/trips/123456789"
+               value="{{session.get('trip_url', '')}}"
+               size="45"
+               required>
+    </input>
+    <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
+
+
+
     <p>Waypoints and special cues on the route are always included.  What else?</p>
 
     <div>
         <input type="checkbox" name="cues"/>
         <label for="cues">Include turn cues?</label><br />
-        <input type="checkbox" name="miles_5" checked/>
+        <input type="checkbox" name="miles_5" />
         <label for="miles_5">5 mile intervals?</label><br />
-        <input type="checkbox" name="miles_10"/>
+        <input type="checkbox" name="miles_10" checked />
         <label for="miles_10">10 mile intervals?</label><br />
         <input type="checkbox" name="km_10"/>
         <label for="km_10">10 km intervals?</label><br />
