@@ -96,8 +96,13 @@ route_points_t = list[tuple[tuple[float, float], float, str, str]]
 def route_points_from_rwgps(route: dict, options: dict[str, bool]) -> route_points_t:
     """Extract the route points from a route object returned by the RWGPS API"""
     # Cues: At least controls, sometimes also turns
+    result = []
+    # Begin and end are implicit route points
+    result += [((route["first_lat"], route["first_lng"]), 0, "Start", "Start")]
+    result += [((route["last_lat"], route["last_lng"]), route["distance"], "Finish", "Finish")]
+
     ignore = set() if options["cues"] else IGNORE_CUES
-    result = cues_from_rwgps(route, ignore)
+    result += cues_from_rwgps(route, ignore)
     # Include landmarks with distances (that is, POIs that are on course)
     waypoints = waypoints_from_rwgps(route)
     result += waypoints
