@@ -49,18 +49,21 @@
             pattern="(https://ridewithgps.com/trips/)?[0-9]+((\?.*)?)"
                title="Valid URLs look like https://ridewithgps.com/trips/123456789"
                value="{{session.get('trip_url', '')}}"
-               size="50"
+               size="45"
                required
         >
 
     </input>
     <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
     </input>
-    <label_for route_url>Route URL:</label_for>
+    <label_for route_url>
+        <a href="{{ url_for('form_search_routes_get') }}" class="button">Search routes</a>
+        Route URL:</label_for>
     <input type="url" name="route_url"
         pattern="(https://ridewithgps.com/routes/)?[0-9]+((\?.*)?)"
         title="Valid URLs look like https://ridewithgps.com/routes/123456789"
-           size="60"
+           size="45"
+           value="{{session.get('route_url', '')}}"
         required>
     </input>
     <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>

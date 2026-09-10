@@ -361,6 +361,52 @@ def form_select_trip_respond():
     return redirect(url_for("form_analyze_trip_get"))
 
 #####
+#  Search for a route.  This is a side-trip from the trip analysis
+#     form, so that one can do the RWGPS search right in the app.
+#  Two forms here:  one for the search, generating a list of candidate trips,
+#     and one for selecting a trip from the list.
+#  User can filter by name (partial match) and distance
+#####
+
+@app.route("/form_search_routes_get", methods=["GET"])
+def form_search_routes_get():
+    """User on trip form wants to search for a suitable trip"""
+    return render_template("form_search_routes.html")
+
+
+@app.route("/form_search_routes_respond", methods=["POST"])
+def form_search_routes_respond():
+    """User has filled the search form to find a trip."""
+    route_name = request.form.get("route_name", "")
+    min_km_field = request.form.get("min_km", "")
+    max_km_field = request.form.get("max_km", "")
+    log.debug(f"Search for route_name: {route_name} min_km: {min_km_field} max_km: {max_km_field}")
+    if min_km_field.isdigit():
+        min_km = int(min_km_field)
+    else:
+        min_km = 0
+    if max_km_field.isdigit():
+        max_km = int(max_km_field)
+    else:
+        max_km = 0  # Treat 0 as "any"
+    routes = get_routes(route_name, min_km, max_km)
+    return render_template("form_select_route.html", routes=routes)
+
+@app.route("/form_select_route_respond", methods=["POST"])
+def form_select_route_respond():
+    """User has selected a route from the list of candidates.
+    Place it into session and redirect to trip analysis form.
+    """
+    route_id = request.form.get("route_id", "")
+    if route_id.isdigit():
+        route_url = f"https://ridewithgps.com/routes/{route_id}"
+        log.debug(f"route: {route_url}")
+        session["route_url"] = route_url  # Accessible to form_analyze_trip
+        session["route_id"] = route_id
+    return redirect(url_for("form_analyze_trip_get"))
+
+
+#####
 # Logout discards session data
 #####
 
@@ -442,7 +488,51 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
         raise Exception(f"RWGPS API error ({response.status_code}): {response.text}")
 
     data = response.json()
-    return data["trips"]
+    trips_list = sorted(data["trips"], key=lambda trip: trip["departed_at"], reverse=True)
+    return trips_list
+
+
+def get_routes(route_name: str, min_km: str, max_km: str ) -> list[dict]:
+    """Obtain list of routes from RWGPS API."""
+    access_token = session.get("access_token")
+    if not access_token:
+        log.error("No access token in session")
+        raise Exception("No access token in session")
+    log.debug(f"Accessing route list\naccess_token: {access_token} (valid)\n")
+
+    # Authenticated API calls pass the access token in the Authorization
+    # header, using the "Bearer" scheme -- this is standard OAuth2.
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    payload = {}
+    if route_name: payload["name"] = route_name
+    if min_km: payload["distance_min"] = min_km * 1000
+    if max_km: payload["distance_max"] = max_km * 1000
+    log.debug(f"Route search payload: {payload}")
+
+    response = requests.get(
+        f"{RWGPS_API_BASE}/routes.json",
+        headers=headers, params=payload,
+        timeout=10,
+    )
+
+    if response.status_code == 401:
+        # The token expired or was revoked. A production app would try to
+        # use the refresh_token here to get a new access_token. For this
+        # demo, we just send the user back to log in again.
+        log.error(f"Token expired or revoked\n{response.text}")
+        session.pop("access_token", None)
+        session.pop("refresh_token", None)
+        flask.flash("Your session has expired. Please log in again.")
+        raise Exception("Token expired or revoked")
+
+    if not response.ok:
+        flask.flash(f"Error fetching route list: {response.text}")
+        raise Exception(f"RWGPS API error ({response.status_code}): {response.text}")
+
+    data = response.json()
+    routes_list = sorted(data["routes"], key=lambda route: route["distance"])
+    return routes_list
 
 
 def get_details(item_id: str, item_kind: str):
