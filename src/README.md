@@ -95,3 +95,16 @@ Flask session (an encrypted cookie). A production app would instead:
 - Use the `refresh_token` to silently renew an expired `access_token`
   instead of forcing the user to log in again
 - Handle token revocation if a user disconnects the integration
+
+# Notes for server install
+
+```
+uv sync
+tmux new -s flask
+uv run gunicorn --chdir src --bind 0.0.0.0:5475 App:app
+
+```
+
+Then ctrl-B, D to detach
+tmux attach -t flask  # to reattach
+

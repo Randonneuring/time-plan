@@ -418,9 +418,9 @@ def logout():
     RWGPS's side -- it just makes our app forget it. A thorough app would
     also call RWGPS's token revocation endpoint, if one is available.
     """
-    access_token = session.get("access_token")
+    access_token = session.get("access_token", None)
     if access_token:
-        token_response = requests.post(
+        revocation_response = requests.post(
             RWGPS_REVOKE_URL,
             data={
                 "token": access_token,
@@ -429,11 +429,11 @@ def logout():
             },
             timeout=10,
             )
-        if response.ok:
+        if revocation_response.ok:
             flask.flash("Logged out successfully.")
         else:
-            log.error(f"Error revoking token: {response.text}")
-            flask.flash(f"Error while trying to discard token: {response.text}")
+            log.error(f"Error revoking token: {revocation_response.text}")
+            flask.flash(f"Error while trying to discard token: {revocation_response.text}")
     else:
         flask.flash("Already logged out.")
 
