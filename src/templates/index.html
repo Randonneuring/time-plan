@@ -9,7 +9,7 @@
 <body>
 <div class="container">
 <div class="main-content">
-  <h1>Ride With GPS OAuth Demo</h1>
+  <h1>Times of Passage</h1>
 
   {% if error %}
     <p class="error">{{ error }}</p>
@@ -24,6 +24,11 @@
     </ul>
   {% endif %}
 {% endwith %}
+
+  <p>Analyze a <em>trip</em> with respect to a <em>route</em> from Ride With GPS.</p>
+  <p>Combines cues from the route with times from the trip to indicate
+  when the rider passed each cue.  Both the route and the trip must
+  be in Ride with GPS (not Strava, Garmin, etc.)</p>
 
   {% if has_token %}
     <p>You're connected to Ride With GPS.</p>

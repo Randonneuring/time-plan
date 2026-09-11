@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select route for analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='time-plan.css') }}">
+</head>
+<body>
+<div class="container">
+<div class="main-content">
+<h1>Select route for analysis</h1>
+<form action="{{ url_for('form_select_route_respond') }}" method="post">
+    <fieldset>
+        <legend>Select route to analyze</legend>
+        <div>
+            {% for route in routes %}
+                <input type="radio" id="{{route['id']}}" name="route_id" value="{{route['id']}}">
+                <label for="{{route['id']}}">
+                    {{route['name']}}
+                    {{route['distance'] // 1000}} km
+                    (<a href="https://ridewithgps.com/routes/{{route['id']}}"
+                        target="rwgps-inspect">?</a>)
+                </label><br>
+            {% endfor %}
+        </div>
+    </fieldset>
+    <button type="submit">Submit</button>
+</form>
+
+</div></div>
+</body>
+</html>

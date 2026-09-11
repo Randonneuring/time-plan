@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search for routes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='time-plan.css') }}">
+</head>
+<body>
+<div class="container">
+<div class="main-content">
+<h1>Find RWGPS Route for Trip Analysis</h1>
+
+<form action="{{ url_for('form_search_routes_respond') }}" method="post">
+  <label for="route_name">Name (partial match):</label>
+  <input type="text" id="route_name" name="route_name" size="60">
+  <br />
+  <label for="min_km">Min length (km):</label>
+  <input type="number" id="min_km" name="min_km" size=5  value="0"><br />
+  <label for="max_km">Max length (km):</label>
+  <input type="number" id="max_km" name="max_km" size=5 value="10000"><br />
+  <input type="submit" value="Search">
+</form>
+</div></div>
+</body>
+</html>
