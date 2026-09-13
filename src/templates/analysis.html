@@ -9,8 +9,8 @@
 <div class="container"></div>
 <div class="main-content">
 <h1>Times of Passage</h1>
-<p>Route  {{ route["name"] }}, {{ route["distance"] // 1000 }} km </p>
-<p>Ridden as {{trip["name"]}} on {{ trip["departed_at"] | iso_to_date }}, {{ trip["distance"] // 1000}} km</p>
+<p>Route  {{ route["name"] }}, {{ route["distance"] // 1000 }} km
+ridden as {{trip["name"]}}, {{ trip["distance"] // 1000}} km on {{ trip["departed_at"] | iso_to_date }} </p>
 <table>
     <tr>
         <th>Type</th>
@@ -27,8 +27,8 @@
             <td> {{ m["time_local"] }}</td>
             <td>({{m["time_elapsed"]}})</td>
             <td> {{ m["text"] }} </td>
-            <td> {% if m["deviation"] > 50 %}
-                +/-{{ m["deviation"] | round(0)}}m
+            <td> {% if m["deviation"] > 100 %}
+                 +/- {{ (m["deviation"]/1000) | round(1) }} km
                 {% endif %}
             </td>
         </tr>
