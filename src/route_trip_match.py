@@ -282,7 +282,7 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
 
         # Default if we don't find a match.
         entry = {"found": False, "dist": dist, "time": "", "latlon": latlon,
-                 "text": f"No trip points within {MAX_LANDMARK_MISS} meters of {text}",
+                 "text": f"No trip points within {MAX_LANDMARK_MISS} meters of {kind}",
                  "kind": kind, "deviation": MAX_LANDMARK_MISS}
 
         # Select enough close points to have representatives of multiple passages
@@ -351,6 +351,8 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
                      "kind": kind}
             bonus_meters = max(bonus_meters, trip_dists[candidate] - dist)
             #FIXME: Should we always reset to current bonus meters?
+        else:
+            entry["deviation"] = closest_dist
         matches.append(entry)
 
     return matches
@@ -397,6 +399,9 @@ def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
     zone_info = ZoneInfo(trip_struc.get("time_zone", "utc"))
     log.debug(f"Trip time zone: {zone_info}")
     for match in matches:
+        km = match["dist"] / 1000.0
+        match["dist_km"] = km
+        match["dist_mi"] = km * 0.621371
         if match["found"]:
             unix_time = match["time"]
             elapsed_seconds = unix_time - begin_time_unix
@@ -407,12 +412,7 @@ def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
             match["time_iso"] = time_iso
             match["time_local"] = time_local
             match["time_elapsed"] = timedelta_hhmm(elapsed)  # Should display as HH:MM:SS
-            km = match["dist"] / 1000.0
-            match["dist_km"] = km
-            match["dist_mi"] = km * 0.621371
         else:
-            match["dist_km"] = -1
-            match["dist_mi"] = -1
             match["time_iso"] = ""
             match["time_elapsed"] = ""
             match["time_local"] = ""

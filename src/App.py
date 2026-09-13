@@ -138,7 +138,7 @@ def login():
     # compare it against what RWGPS sends back in /callback.
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
-    log.debug(f"Storing state in session: {state}")
+    # log.debug(f"Storing state in session: {state}")
 
     query_params = {
         "client_id": RWGPS_CLIENT_ID,
@@ -151,15 +151,15 @@ def login():
         # it supports.
         # "scope": "read",
     }
-    log.debug(f"query_params: {query_params}")
+    log.debug(f"Oauth query_params: {query_params}")
     authorize_url = f"{RWGPS_AUTHORIZE_URL}?{urlencode(query_params)}"
     resp = redirect(authorize_url)
     log.debug(
         "Set-Cookie: %s",
         resp.headers.getlist("Set-Cookie")
     )
-    log.debug(f"session.modified={session.modified}")
-    log.debug(f"session={dict(session)}")
+    log.debug(f"login: session.modified={session.modified}")
+    log.debug(f"login: session={dict(session)}")
     return resp
 
 @app.route("/rwgps_auth_callback")
@@ -269,7 +269,7 @@ def form_analyze_trip_respond():
 
     trip_url = request.form.get("trip_url", "")
     route_url = request.form.get("route_url", "")
-    log.debug(f"trip_url: {trip_url}\nroute_url: {route_url}\n")
+    #log.debug(f"trip_url: {trip_url}\nroute_url: {route_url}\n")
 
     trip_id = trip_url.split("/")[-1]
     # Could have ?privacy_code=... at end
@@ -282,8 +282,8 @@ def form_analyze_trip_respond():
 
     try:
         trip_struct = get_details(trip_id, "trip")
-        log.debug(f"trip departed at: {trip_struct['departed_at']}")
-        log.debug(f"trip time zone: {trip_struct['time_zone']}")
+        #log.debug(f"trip departed at: {trip_struct['departed_at']}")
+        #log.debug(f"trip time zone: {trip_struct['time_zone']}")
         route_struct = get_details(route_id, "route")
     except Exception as e:
         log.error(f"Error getting trip or route details: {e}")
@@ -310,7 +310,7 @@ def form_analyze_trip_respond():
 
     matches = route_trip_match.matches(landmarks, trip_points)
     route_trip_match.humanize_matches_rwgps(matches, trip_struct)
-    log.debug(f"matches: {matches}")
+    # log.debug(f"matches: {matches}")
 
     return render_template("analysis.html",
                            trip=trip_struct, route=route_struct,
@@ -337,7 +337,7 @@ def form_search_trips_respond():
     trip_name = request.form.get("trip_name", "")
     min_km_field = request.form.get("min_km", "")
     max_km_field = request.form.get("max_km", "")
-    log.debug(f"Search for trip_name: {trip_name} min_km: {min_km_field} max_km: {max_km_field}")
+    # log.debug(f"Search for trip_name: {trip_name} min_km: {min_km_field} max_km: {max_km_field}")
     if min_km_field.isdigit():
         min_km = int(min_km_field)
     else:
@@ -357,7 +357,7 @@ def form_select_trip_respond():
     trip_id = request.form.get("trip_id", "")
     if trip_id.isdigit():
         trip_url = f"https://ridewithgps.com/trips/{trip_id}"
-        log.debug(f"trip: {trip_url}")
+        # log.debug(f"trip: {trip_url}")
         session["trip_url"] = trip_url  # Accessible to form_analyze_trip
     return redirect(url_for("form_analyze_trip_get"))
 
@@ -377,10 +377,13 @@ def form_search_routes_get():
 
 @app.route("/form_search_routes_respond", methods=["POST"])
 def form_search_routes_respond():
-    """User has filled the search form to find a trip."""
+    """User has filled the search form to find a route."""
     route_name = request.form.get("route_name", "")
     min_km_field = request.form.get("min_km", "")
     max_km_field = request.form.get("max_km", "")
+    collection =request.form.get("collection", "")
+    pinned = (collection == "pinned")
+    log.debug(f"Search for pinned route? {pinned} ")
     log.debug(f"Search for route_name: {route_name} min_km: {min_km_field} max_km: {max_km_field}")
     if min_km_field.isdigit():
         min_km = int(min_km_field)
@@ -390,7 +393,7 @@ def form_search_routes_respond():
         max_km = int(max_km_field)
     else:
         max_km = 0  # Treat 0 as "any"
-    routes = get_routes(route_name, min_km, max_km)
+    routes = get_routes(route_name, min_km, max_km, pinned=pinned)
     return render_template("form_select_route.html", routes=routes)
 
 @app.route("/form_select_route_respond", methods=["POST"])
@@ -401,7 +404,7 @@ def form_select_route_respond():
     route_id = request.form.get("route_id", "")
     if route_id.isdigit():
         route_url = f"https://ridewithgps.com/routes/{route_id}"
-        log.debug(f"route: {route_url}")
+        # log.debug(f"route: {route_url}")
         session["route_url"] = route_url  # Accessible to form_analyze_trip
         session["route_id"] = route_id
     return redirect(url_for("form_analyze_trip_get"))
@@ -465,7 +468,7 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
     if not access_token:
         log.error("No access token in session")
         raise Exception("No access token in session")
-    log.debug(f"Accessing trip list\naccess_token: {access_token} (valid)\n")
+    # log.debug(f"Accessing trip list\naccess_token: {access_token} (valid)\n")
 
     # Authenticated API calls pass the access token in the Authorization
     # header, using the "Bearer" scheme -- this is standard OAuth2.
@@ -475,7 +478,7 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
     if trip_name: payload["name"] = trip_name
     if min_km: payload["distance_min"] = min_km * 1000
     if max_km: payload["distance_max"] = max_km * 1000
-    log.debug(f"Trip search payload: {payload}")
+    # log.debug(f"Trip search payload: {payload}")
 
     response = requests.get(
         f"{RWGPS_API_BASE}/trips.json",
@@ -502,13 +505,13 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
     return trips_list
 
 
-def get_routes(route_name: str, min_km: str, max_km: str ) -> list[dict]:
+def get_routes(route_name: str, min_km: str, max_km: str, pinned=False) -> list[dict]:
     """Obtain list of routes from RWGPS API."""
     access_token = session.get("access_token")
     if not access_token:
         log.error("No access token in session")
         raise Exception("No access token in session")
-    log.debug(f"Accessing route list\naccess_token: {access_token} (valid)\n")
+    # log.debug(f"Accessing route list\naccess_token: {access_token} (valid)\n")
 
     # Authenticated API calls pass the access token in the Authorization
     # header, using the "Bearer" scheme -- this is standard OAuth2.
@@ -518,10 +521,15 @@ def get_routes(route_name: str, min_km: str, max_km: str ) -> list[dict]:
     if route_name: payload["name"] = route_name
     if min_km: payload["distance_min"] = min_km * 1000
     if max_km: payload["distance_max"] = max_km * 1000
-    log.debug(f"Route search payload: {payload}")
+    # log.debug(f"Route search payload: {payload}")
+
+    if pinned:
+        endpoint = f"{RWGPS_API_BASE}/collections/pinned.json"
+    else:
+        endpoint = f"{RWGPS_API_BASE}/routes.json"
 
     response = requests.get(
-        f"{RWGPS_API_BASE}/routes.json",
+        endpoint,
         headers=headers, params=payload,
         timeout=10,
     )
@@ -541,7 +549,11 @@ def get_routes(route_name: str, min_km: str, max_km: str ) -> list[dict]:
         raise Exception(f"RWGPS API error ({response.status_code}): {response.text}")
 
     data = response.json()
-    routes_list = sorted(data["routes"], key=lambda route: route["distance"])
+    if pinned:
+        routes = data["collection"]["routes"]
+    else:
+        routes = data["routes"]
+    routes_list = sorted(routes, key=lambda route: route["name"])
     return routes_list
 
 
@@ -554,7 +566,7 @@ def get_details(item_id: str, item_kind: str):
     if not access_token:
         log.error("No access token in session")
         raise Exception("No access token in session")
-    log.debug(f"Accessing:{item_kind} {item_id}\naccess_token: {access_token} (valid)\n")
+    # log.debug(f"Accessing:{item_kind} {item_id}\naccess_token: {access_token} (valid)\n")
 
     # Authenticated API calls pass the access token in the Authorization
     # header, using the "Bearer" scheme -- this is standard OAuth2.

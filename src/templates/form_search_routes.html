@@ -11,6 +11,12 @@
 <h1>Find RWGPS Route for Trip Analysis</h1>
 
 <form action="{{ url_for('form_search_routes_respond') }}" method="post">
+    <input type="radio" id="my_routes" name="collection" value="mine">
+    <label for="my_routes"> My own routes (with selection criteria)</label><br>
+    <input type="radio" id="pinned_routes" name="collection" value="pinned" checked>
+    <label for="pinned_routes">My pinned routes (complete list)</label>
+    <br/><br/>
+        Selection criteria (applies only to your own routes)<br/>
   <label for="route_name">Name (partial match):</label>
   <input type="text" id="route_name" name="route_name" size="60">
   <br />
@@ -18,6 +24,8 @@
   <input type="number" id="min_km" name="min_km" size=5  value="0"><br />
   <label for="max_km">Max length (km):</label>
   <input type="number" id="max_km" name="max_km" size=5 value="10000"><br />
+
+
   <input type="submit" value="Search">
 </form>
 </div></div>
