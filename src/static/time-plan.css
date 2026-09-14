@@ -33,6 +33,27 @@
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; vertical-align: top;}
     .error { background: #fde8e8; color: #9b1c1c; padding: 10px; border-radius: 6px; }
 
+    /* Scrollable table with sticky header */
+            .scrolling-container {
+            max-height: 10em;  /* Not sure this has any effect */
+            overflow-y: auto;
+        }
+        .scrolling-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .scrolling-table th, .scrolling-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .scrolling-table th {
+            position: sticky;
+            top: 0;
+            background-color: beige;
+            border-bottom: 1px solid #ddd;
+        }
+
       input:invalid {
         border: 2px dashed red;
       }
