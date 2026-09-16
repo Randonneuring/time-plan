@@ -251,6 +251,10 @@ URL name scheme for form-handling:
 #  Analyzing a trip.
 #  Form has entries for route URL, trip URL, and options like
 #    whether to include directional cues or mile markers.
+# FIXME:  Support analysis of multiple trips.
+#    URL-encode trip URLs as a list (doseq=true), treat
+#    a single URL as a singleton list.  First URL is required.
+#    request.args.getlist in place of request.args.get
 #####
 
 @app.route("/form_analyze_trip_get", methods=["GET"])
