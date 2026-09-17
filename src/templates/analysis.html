@@ -12,29 +12,26 @@
 <div class="container"></div>
 <div class="main-content">
 <h1>Times of Passage</h1>
-<p>Route  {{ route["name"] }}, {{ route["distance"] // 1000 }} km
-ridden as {{trip["name"]}}, {{ trip["distance"] // 1000}} km on {{ trip["departed_at"] | iso_to_date }} </p>
     <div class="scrolling-container"></div>
     <table class="scrolling-table">
     <tr>
         <th>Type</th>
         <th>Dist km</th> <th>mi</th>
-        <th>Time</th> <th>(elapsed)</th>
         <th>Info</th>
-        <th>Δ</th>
-    </tr>
-    {% for m in matches %}
+        {% for i in range(0, rows[0] | length) %}
+            <th>Time</th> <th>(elapsed)</th>
+        {% endfor %}
+    </tr>  <!-- FIXME - Loop over rows, loop over dicts within row -->
+    {% for row in rows %}
         <tr>
-            <td> {{ m["kind"] }} </td>
-            <td> {{ m["dist_km"] | round(1) }} </td>
-            <td>{{ m["dist_mi"] | round(1) }} </td>
-            <td> {{ m["time_local"] }}</td>
-            <td>({{m["time_elapsed"]}})</td>
-            <td> {{ m["text"] }} </td>
-            <td> {% if m["deviation"] > 100 %}
-                 +/- {{ (m["deviation"]/1000) | round(1) }} km
-                {% endif %}
-            </td>
+            <td> {{ row[0]["kind"] }} </td>
+            <td> {{ row[0]["dist_km"] | round(1) }} </td>
+            <td>{{ row[0]["dist_mi"] | round(1) }} </td>
+            <td> {{ row[0]["text"] }} </td>
+            {% for i in range(0, rows[0] | length) %}
+                <td> {{ row[i]["time_local"] }}</td>
+                <td>({{row[i]["time_elapsed"]}})</td>
+            {% endfor %}
         </tr>
     {% endfor %}
 </table>

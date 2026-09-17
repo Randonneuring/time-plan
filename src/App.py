@@ -271,27 +271,37 @@ def form_analyze_trip_respond():
     correct-looking URLs into the form.
     """
 
-    trip_url = request.form.get("trip_url", "")
+    trip_urls = request.form.getlist("trip_url")
     route_url = request.form.get("route_url", "")
-    #log.debug(f"trip_url: {trip_url}\nroute_url: {route_url}\n")
+    log.debug(f"trip_url: {trip_urls}\nroute_url: {route_url}\n")
 
-    trip_id = trip_url.split("/")[-1]
-    # Could have ?privacy_code=... at end
-    trip_id = trip_id.split("?")[0]
-    assert trip_id.isdigit(), f"Don't hack me with a bad URL bro ({trip_url})"
-    route_id = route_url.split("/")[-1]
-    # Could have ?privacy_code=... at end
-    route_id = route_id.split("?")[0]
-    assert route_id.isdigit(), f"Don't hack me with a bad URL bro ({trip_url})"
-
+    # Route information
     try:
-        trip_struct = get_details(trip_id, "trip")
-        #log.debug(f"trip departed at: {trip_struct['departed_at']}")
-        #log.debug(f"trip time zone: {trip_struct['time_zone']}")
+        route_id = route_url.split("/")[-1]
+        # Could have ?privacy_code=... at end
+        route_id = route_id.split("?")[0]
+        assert route_id.isdigit(), f"Don't hack me with a bad URL bro ({route_url})"
         route_struct = get_details(route_id, "route")
     except Exception as e:
-        log.error(f"Error getting trip or route details: {e}")
+        log.error(f"Error getting route details: {e}")
         return redirect(url_for("index"))
+
+    trip_structs = []
+    for trip_url in trip_urls:
+        if not trip_url:
+            continue  # Skip blank entry
+        trip_id = trip_url.split("/")[-1]
+        # Could have ?privacy_code=... at end
+        trip_id = trip_id.split("?")[0]
+        assert trip_id.isdigit(), f"Don't hack me with a bad URL bro ({trip_url})"
+        try:
+            trip_struct = get_details(trip_id, "trip")
+            trip_structs.append(trip_struct)
+            #log.debug(f"trip departed at: {trip_struct['departed_at']}")
+            #log.debug(f"trip time zone: {trip_struct['time_zone']}")
+        except Exception as e:
+            log.error(f"Error getting trip or route details: {e}")
+            return redirect(url_for("index"))
 
     """Form data: 
     Check boxes: "cues", "miles_5", "miles_10", "km_10"
@@ -303,22 +313,25 @@ def form_analyze_trip_respond():
     options["miles_10"] = request.form.get("miles_10", False    )
     options["km_10"] = request.form.get("km_10", False)
     # log.debug(f"Route points: {route_trip_match.route_points_from_rwgps(route_struct)}")
+
     landmarks = route_trip_match.route_points_from_rwgps(route_struct, options)
     #  Enrich landmarks according to options in the form:
     #   May include turn cues, mile/km markers
-    trip_points = route_trip_match.trip_points_from_rwgps(trip_struct)
 
-    # For debugging purposes, we want to turn the parallel arrays of trip
-    locs, dists, times  = trip_points
-    points = list(zip(locs, dists, times))
+    trip_logs = []
+    for trip_struct in trip_structs:
+        trip_points = route_trip_match.trip_points_from_rwgps(trip_struct)
+        matches = route_trip_match.matches(landmarks, trip_points)
+        route_trip_match.humanize_matches_rwgps(matches, trip_struct)
+        # log.debug(f"matches: {matches}")
+        trip_logs.append(matches)
 
-    matches = route_trip_match.matches(landmarks, trip_points)
-    route_trip_match.humanize_matches_rwgps(matches, trip_struct)
-    # log.debug(f"matches: {matches}")
+    # Transpose parallel arrays into array of tuples
+    rows = list(zip(*trip_logs))
 
     return render_template("analysis.html",
-                           trip=trip_struct, route=route_struct,
-                           matches=matches,
+                           # Overall descriptions from route and trips
+                           rows = rows,
                            error=None)
 
 #####
@@ -358,11 +371,15 @@ def form_select_trip_respond():
     """User has selected a trip from the list of candidate trips.
     Place it into session and redirect to trip analysis form.
     """
-    trip_id = request.form.get("trip_id", "")
-    if trip_id.isdigit():
-        trip_url = f"https://ridewithgps.com/trips/{trip_id}"
+    trips_selected = request.form.getlist("trip_id")
+    log.debug(f"Trips selected: {trips_selected}")
+    trip_urls = []
+    for trip_id in trips_selected:
+        if trip_id.isdigit():
+            url = f"https://ridewithgps.com/trips/{trip_id}"
+            trip_urls.append(url)
         # log.debug(f"trip: {trip_url}")
-        session["trip_url"] = trip_url  # Accessible to form_analyze_trip
+    session["trip_urls"] = trip_urls  # Accessible to form_analyze_trip
     return redirect(url_for("form_analyze_trip_get"))
 
 #####
@@ -466,7 +483,7 @@ def iso_to_date(iso_date: str) -> str:
 # by redirecting to the index page with an error message)
 # =================================
 
-def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
+def get_trips(trip_name: str, min_km: int, max_km: int ) -> list[dict]:
     """Obtain list of trips from RWGPS API."""
     access_token = session.get("access_token")
     if not access_token:
@@ -509,7 +526,7 @@ def get_trips(trip_name: str, min_km: str, max_km: str ) -> list[dict]:
     return trips_list
 
 
-def get_routes(route_name: str, min_km: str, max_km: str, pinned=False) -> list[dict]:
+def get_routes(route_name: str, min_km: int, max_km: int, pinned=False) -> list[dict]:
     """Obtain list of routes from RWGPS API."""
     access_token = session.get("access_token")
     if not access_token:
@@ -555,10 +572,28 @@ def get_routes(route_name: str, min_km: str, max_km: str, pinned=False) -> list[
     data = response.json()
     if pinned:
         routes = data["collection"]["routes"]
+        routes = filter_pinned_routes(routes, route_name, min_km, max_km)
     else:
-        routes = data["routes"]
+        routes = data["routes"]  # Filtered in retrieval from RWGPS
     routes_list = sorted(routes, key=lambda route: route["name"])
     return routes_list
+
+def filter_pinned_routes(routes: list[dict], route_name: str, min_km: int,  max_km: int) -> list[dict]:
+    """RWGPS API returns a mixed and unfiltered list of routes and trips from the pinned collection,
+    so we need to filter the list ourselves.
+    """
+    result = []
+    for route in routes:
+        if route_name and (route_name not in route["name"]):
+            continue  # Omit
+        if min_km and (route["distance"] < min_km * 1000):
+            continue  # Omit
+        if max_km and (route["distance"] > max_km * 1000):
+            continue
+        result.append(route)
+    return result
+
+
 
 
 def get_details(item_id: str, item_kind: str):

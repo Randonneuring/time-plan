@@ -54,6 +54,20 @@
             border-bottom: 1px solid #ddd;
         }
 
+        /* Trip URLs arranged in a column */
+        .trip-urls-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        .trip-urls-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .trip-urls a {
+            margin-bottom: 5px;
+        }
       input:invalid {
         border: 2px dashed red;
       }

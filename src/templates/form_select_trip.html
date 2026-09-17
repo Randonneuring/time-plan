@@ -14,7 +14,7 @@
         <legend>Select trip to analyze</legend>
         <div>
             {% for trip in trips %}
-                <input type="radio" id="{{trip['id']}}" name="trip_id" value="{{trip['id']}}">
+                <input type="checkbox" id="{{trip['id']}}" name="trip_id" value="{{trip['id']}}">
                 <label for="{{trip['id']}}">
                     {{trip['departed_at'] | iso_to_date }}
                     {{trip['name']}}
