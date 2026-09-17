@@ -12,8 +12,21 @@
 <div class="container"></div>
 <div class="main-content">
 <h1>Times of Passage</h1>
+    <h2>{{route["name"]}}, {{ route["distance"] // 1000 }} km </h2>
+    <p>
+    {% for trip in trips %}
+    {{trip["departed_at"] | iso_to_date }} {{trip["name"]}} {{trip["distance"] // 1000}} km<br>
+    {% endfor %}
+    </p>
+
     <div class="scrolling-container"></div>
     <table class="scrolling-table">
+        <tr> <!-- Headers to label columns by trip -->
+            <th colspan="4">&nbsp;</th>
+            {% for trip in trips %}
+                <th colspan="2"> {{ trip["departed_at"] | iso_to_date }}  </th>
+            {% endfor %}
+        </tr>
     <tr>
         <th>Type</th>
         <th>Dist km</th> <th>mi</th>

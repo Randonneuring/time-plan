@@ -331,6 +331,8 @@ def form_analyze_trip_respond():
 
     return render_template("analysis.html",
                            # Overall descriptions from route and trips
+                           route=route_struct, trips=trip_structs,
+                           # Aligned rows of matches for each trip,
                            rows = rows,
                            error=None)
 

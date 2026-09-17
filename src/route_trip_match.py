@@ -282,7 +282,7 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
 
         # Default if we don't find a match.
         entry = {"found": False, "dist": dist, "time": "", "latlon": latlon,
-                 "text": f"No trip points within {MAX_LANDMARK_MISS} meters of {kind}",
+                 "text": text,  # Might be found on some trips and not others
                  "kind": kind, "deviation": MAX_LANDMARK_MISS}
 
         # Select enough close points to have representatives of multiple passages
