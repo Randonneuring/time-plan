@@ -283,7 +283,7 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
         # Default if we don't find a match.
         entry = {"found": False, "dist": dist, "time": "", "latlon": latlon,
                  "text": text,  # Might be found on some trips and not others
-                 "kind": kind, "deviation": MAX_LANDMARK_MISS}
+                 "kind": kind, "deviation": MAX_LANDMARK_MISS, "paused": 0}
 
         # Select enough close points to have representatives of multiple passages
         # by landmark in case of loop, out-and-back, or lollipop routes
@@ -343,9 +343,9 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
         if found:
             log.debug(f"Found closest candidate {closest} for {text} within {closest_dist:.2f} meters")
             closest_time = trip_times[closest]
-            arrival_time, depart_time = time_paused(trip, closest)
+            paused = time_paused(trip, closest)
             entry = {"found": True, "dist": dist, "time": closest_time,
-                     "arrival_time": arrival_time, "departure_time": depart_time,
+                     "paused": paused,
                      "latlon": trip_latlons[closest], "text": text,
                      "deviation": closest_dist,
                      "kind": kind}
@@ -357,33 +357,49 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
 
     return matches
 
-def time_paused(trip: trip_points_t, closest: int) -> tuple[int, int]:
-    """Given one 'closest' point, look back and forward to find time
-    paused within delta meters of that point, returning both as
-    unix epoch seconds.
+def time_paused(trip: trip_points_t, closest: int) -> int:
+    """Given one 'closest' point, find the longest time spent
+    in a small area (currently 20 meters) within MAX_LANDMARK_MISS meters
+    in trip distance of the closest point.
     """
-    EPSILON = 500 # Meters that GPS can wander
+
+    # First, pick out a subrange of the trip-points within
+    # which we will look for pauses.  We can scan cheaply by
+    # looking at trip distance from closest point
+    EPSILON = MAX_LANDMARK_MISS
     trip_latlons, trip_dists, trip_times = trip
     first = closest
-    first_time = trip_times[first]
     while first > 0:
-        deviation = haversine(trip_latlons[first], trip_latlons[closest], unit=hv_Unit.METERS)
+        deviation = abs(trip_dists[closest] - trip_dists[first])
         if deviation <= EPSILON:
-            first_time = trip_times[first]
             first -= 1
         else:
             break
     last = closest
-    last_time = trip_times[last]
     while last < len(trip_times) - 1:
-        deviation = haversine(trip_latlons[last], trip_latlons[closest], unit=hv_Unit.METERS)
+        deviation = abs(trip_dists[last] - trip_dists[closest])
         if deviation <= EPSILON:
             last_time = trip_times[last]
             last += 1
         else:
             break
 
-    return first_time, last_time
+    log.debug(f"Considering pauses between {first} at {(trip_dists[first]/1000):2} and {last} at {(trip_dists[last]/1000):2} ")
+
+    # Now we scan forward within that range, tracking largest time gap in a much smaller distance gap
+    DELTA = 20  ## Magic number ... OK?
+    cur_gap_begin, cur_gap_end = first, first
+    max_time_gap = 0
+    while cur_gap_end < last:
+        cur_gap_end += 1
+        log.debug(f"Considering gap {cur_gap_begin}..{cur_gap_end}")
+        while (trip_dists[cur_gap_end] - trip_dists[cur_gap_begin]) > DELTA:
+            cur_gap_begin += 1
+            log.debug(f"Narrowing to {cur_gap_begin}..{cur_gap_end}, now {trip_dists[cur_gap_begin]}..{trip_dists[cur_gap_end]}")
+        cur_time_gap = trip_times[cur_gap_end] - trip_times[cur_gap_begin]
+        if cur_time_gap > max_time_gap:
+            max_time_gap = cur_time_gap
+    return max_time_gap
 
 
 def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
@@ -411,11 +427,13 @@ def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
             time_local = passed.astimezone().strftime("%H:%M")
             match["time_iso"] = time_iso
             match["time_local"] = time_local
-            match["time_elapsed"] = timedelta_hhmm(elapsed)  # Should display as HH:MM:SS
+            match["time_elapsed"] = timedelta_hhmm(elapsed)  # Should display as HH:MM
+            match["time_paused"] = timedelta_hhmm(dt.timedelta(seconds=match["paused"]))
         else:
             match["time_iso"] = ""
             match["time_elapsed"] = ""
             match["time_local"] = ""
+            match["time_paused"] = ""
 
 def timedelta_hhmm(td: dt.timedelta) -> str:
     """Convert a timedelta to a string of HH:MM (omitting seconds"""

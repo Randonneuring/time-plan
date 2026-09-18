@@ -9,7 +9,7 @@
     </style>
 </head>
 <body>
-<div class="container"></div>
+<div class="container">
 <div class="main-content">
 <h1>Times of Passage</h1>
     <h2>{{route["name"]}}, {{ route["distance"] // 1000 }} km </h2>
@@ -19,12 +19,11 @@
     {% endfor %}
     </p>
 
-    <div class="scrolling-container"></div>
     <table class="scrolling-table">
         <tr> <!-- Headers to label columns by trip -->
             <th colspan="4">&nbsp;</th>
             {% for trip in trips %}
-                <th colspan="2"> {{ trip["departed_at"] | iso_to_date }}  </th>
+                <th colspan="3"> {{ trip["departed_at"] | iso_to_date }}  </th>
             {% endfor %}
         </tr>
     <tr>
@@ -32,22 +31,23 @@
         <th>Dist km</th> <th>mi</th>
         <th>Info</th>
         {% for i in range(0, rows[0] | length) %}
-            <th>Time</th> <th>(elapsed)</th>
+            <th>Time</th> <th>(elapsed)</th><th>Pause</th>
         {% endfor %}
-    </tr>  <!-- FIXME - Loop over rows, loop over dicts within row -->
+    </tr>
     {% for row in rows %}
         <tr>
             <td> {{ row[0]["kind"] }} </td>
             <td> {{ row[0]["dist_km"] | round(1) }} </td>
             <td>{{ row[0]["dist_mi"] | round(1) }} </td>
             <td> {{ row[0]["text"] }} </td>
-            {% for i in range(0, rows[0] | length) %}
-                <td> {{ row[i]["time_local"] }}</td>
+            {% for i in range(0, rows[0] | length) %}  <!-- Columns for each trip -->
+                <td class="trip-col-start"> {{ row[i]["time_local"] }}</td>
                 <td>({{row[i]["time_elapsed"]}})</td>
+                <td> {{ row[i]["time_paused"] }} </td>
             {% endfor %}
         </tr>
     {% endfor %}
-</table>
+    </table>
  </div></div>
 </body>
 </html>

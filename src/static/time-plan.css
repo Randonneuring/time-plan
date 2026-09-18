@@ -38,10 +38,12 @@
             max-height: 10em;  /* Not sure this has any effect */
             overflow-y: auto;
         }
+
         .scrolling-table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .scrolling-table th, .scrolling-table td {
             border: 1px solid #ddd;
             padding: 8px;
@@ -52,7 +54,10 @@
             top: 0;
             background-color: beige;
             border-bottom: 1px solid #ddd;
+
         }
+
+        td.trip-col-start { border-left: 2px solid black;}
 
         /* Trip URLs arranged in a column */
         .trip-urls-wrapper {
