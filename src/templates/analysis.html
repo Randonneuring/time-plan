@@ -41,9 +41,14 @@
             <td>{{ row[0]["dist_mi"] | round(1) }} </td>
             <td> {{ row[0]["text"] }} </td>
             {% for i in range(0, rows[0] | length) %}  <!-- Columns for each trip -->
-                <td class="trip-col-start"> {{ row[i]["time_local"] }}</td>
-                <td>({{row[i]["time_elapsed"]}})</td>
-                <td> {{ row[i]["time_paused"] }} </td>
+                    <td class="trip-col-start">
+                        {% if row[i]["found"]  %}
+                            {{ row[i]["time_local"] }}</td>
+                            <td>({{row[i]["time_elapsed"]}})</td>
+                            <td> {{ row[i]["time_paused"] }} </td>
+                        {% else %}
+                            &nbsp;</td>  <td> &nbsp; </td> <td> &nbsp; </td>
+                        {% endif %}
             {% endfor %}
         </tr>
     {% endfor %}

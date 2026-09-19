@@ -52,7 +52,7 @@ RWGPS significant cues appear some as track points (identifiable by type, e.g., 
 import numpy as np
 from pykdtree.kdtree import KDTree
 import datetime as dt
-from zoneinfo import ZoneInfo
+
 
 from haversine import haversine, Unit as hv_Unit
 
@@ -70,7 +70,7 @@ NUM_CANDIDATES = 20          # Enough trip points to ensure getting all passages
 """Including or omitting cues based on type. """
 DIRECTIONAL_CUES = set(["Left", "Right", "Slight Left", "Slight Right", "Sharp Left", "Sharp Right",
                         "Straight", "Uturn"])
-INFO_NOT_LANDMARK = set(["Danger", "Caution"])
+INFO_NOT_LANDMARK = set(["Danger", "Caution", "Δ"])
 IGNORE_CUES = DIRECTIONAL_CUES | INFO_NOT_LANDMARK
 
 # Have we paused or are we still moving?   GPS coordinates can
@@ -283,7 +283,7 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
         # Default if we don't find a match.
         entry = {"found": False, "dist": dist, "time": "", "latlon": latlon,
                  "text": text,  # Might be found on some trips and not others
-                 "kind": kind, "deviation": MAX_LANDMARK_MISS, "paused": 0}
+                 "kind": kind, "deviation": MAX_LANDMARK_MISS}
 
         # Select enough close points to have representatives of multiple passages
         # by landmark in case of loop, out-and-back, or lollipop routes
@@ -343,7 +343,7 @@ def matches(route: route_points_t, trip: trip_points_t) -> list[dict]:
         if found:
             log.debug(f"Found closest candidate {closest} for {text} within {closest_dist:.2f} meters")
             closest_time = trip_times[closest]
-            paused = time_paused(trip, closest)
+            paused = time_paused(trip, closest) if kind not in IGNORE_CUES else 0
             entry = {"found": True, "dist": dist, "time": closest_time,
                      "paused": paused,
                      "latlon": trip_latlons[closest], "text": text,
@@ -368,7 +368,7 @@ def time_paused(trip: trip_points_t, closest: int) -> int:
     # looking at trip distance from closest point
     EPSILON = MAX_LANDMARK_MISS
     trip_latlons, trip_dists, trip_times = trip
-    first = closest
+    first = int(closest)  # Was getting uint32, which does not subtract nicely
     while first > 0:
         deviation = abs(trip_dists[closest] - trip_dists[first])
         if deviation <= EPSILON:
@@ -396,51 +396,14 @@ def time_paused(trip: trip_points_t, closest: int) -> int:
         while (trip_dists[cur_gap_end] - trip_dists[cur_gap_begin]) > DELTA:
             cur_gap_begin += 1
             log.debug(f"Narrowing to {cur_gap_begin}..{cur_gap_end}, now {trip_dists[cur_gap_begin]}..{trip_dists[cur_gap_end]}")
-        cur_time_gap = trip_times[cur_gap_end] - trip_times[cur_gap_begin]
+        cur_time_gap = trip_times[min(cur_gap_end+1,len(trip_times)-1)] - trip_times[max(cur_gap_begin-1,0)]
         if cur_time_gap > max_time_gap:
             max_time_gap = cur_time_gap
     return max_time_gap
 
 
-def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
-    """Decorate each match struct with human-readable text and time stamp.
-    Modifies each dict structure (does not return a new list).
-    Specialized to RWGPS API trip structure; a similar function could be
-    created for FIT or TCX files.
 
-    FIXME: Am I mixing in too much formatting that should be in the output functionality
-        for web page and CSV?  Maybe this function belongs elsewhere.
-    """
-    begin_time_unix = trip_struc["track_points"][0]["t"]
-    zone_info = ZoneInfo(trip_struc.get("time_zone", "utc"))
-    log.debug(f"Trip time zone: {zone_info}")
-    for match in matches:
-        km = match["dist"] / 1000.0
-        match["dist_km"] = km
-        match["dist_mi"] = km * 0.621371
-        if match["found"]:
-            unix_time = match["time"]
-            elapsed_seconds = unix_time - begin_time_unix
-            elapsed = dt.timedelta(seconds=elapsed_seconds)
-            passed = dt.datetime.fromtimestamp(unix_time, tz=zone_info)
-            time_iso = passed.isoformat()
-            time_local = passed.astimezone().strftime("%H:%M")
-            match["time_iso"] = time_iso
-            match["time_local"] = time_local
-            match["time_elapsed"] = timedelta_hhmm(elapsed)  # Should display as HH:MM
-            match["time_paused"] = timedelta_hhmm(dt.timedelta(seconds=match["paused"]))
-        else:
-            match["time_iso"] = ""
-            match["time_elapsed"] = ""
-            match["time_local"] = ""
-            match["time_paused"] = ""
 
-def timedelta_hhmm(td: dt.timedelta) -> str:
-    """Convert a timedelta to a string of HH:MM (omitting seconds"""
-    seconds = td.total_seconds()
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    return f"{hours:02d}:{minutes:02d}"
 
 
 

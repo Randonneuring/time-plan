@@ -66,10 +66,13 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, session, url_for, jsonify
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+MIN_PAUSE = 120  # Seconds; do not display pauses shorter than this
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -109,9 +112,8 @@ RWGPS_API_BASE = "https://ridewithgps.com/api/v1"
 
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes  URL -> Flask function
 # ---------------------------------------------------------------------------
-
 
 # ------------------------------
 # Oauth protocol for logging in
@@ -322,7 +324,7 @@ def form_analyze_trip_respond():
     for trip_struct in trip_structs:
         trip_points = route_trip_match.trip_points_from_rwgps(trip_struct)
         matches = route_trip_match.matches(landmarks, trip_points)
-        route_trip_match.humanize_matches_rwgps(matches, trip_struct)
+        humanize_matches_rwgps(matches, trip_struct)
         # log.debug(f"matches: {matches}")
         trip_logs.append(matches)
 
@@ -596,8 +598,6 @@ def filter_pinned_routes(routes: list[dict], route_name: str, min_km: int,  max_
     return result
 
 
-
-
 def get_details(item_id: str, item_kind: str):
     """Obtains the details for a trip (item_kind="trip")
     or route (item_kind="route") from RWGPS API.
@@ -636,6 +636,46 @@ def get_details(item_id: str, item_kind: str):
     data = response.json()
     item_struct = data.get(item_kind, {})
     return item_struct
+
+def humanize_matches_rwgps(matches: list[dict], trip_struc: dict):
+    """Decorate each match struct with human-readable text and time stamp.
+    Modifies each dict structure (does not return a new list).
+    Specialized to RWGPS API trip structure; a similar function could be
+    created for FIT or TCX files.
+    """
+    begin_time_unix = trip_struc["track_points"][0]["t"]
+    zone_info = ZoneInfo(trip_struc.get("time_zone", "utc"))
+    log.debug(f"Trip time zone: {zone_info}")
+    for match in matches:
+        km = match["dist"] / 1000.0
+        match["dist_km"] = km
+        match["dist_mi"] = km * 0.621371
+        if match["found"]:
+            unix_time = match["time"]
+            elapsed_seconds = unix_time - begin_time_unix
+            elapsed = dt.timedelta(seconds=elapsed_seconds)
+            passed = dt.datetime.fromtimestamp(unix_time, tz=zone_info)
+            time_iso = passed.isoformat()
+            time_local = passed.astimezone().strftime("%H:%M")
+            match["time_iso"] = time_iso
+            match["time_local"] = time_local
+            match["time_elapsed"] = timedelta_hhmm(elapsed)  # Should display as HH:MM
+            if match.get("paused", 0) > MIN_PAUSE:
+                match["time_paused"] = timedelta_hhmm(dt.timedelta(seconds=match["paused"]))
+            else:
+                match["time_paused"] = ""
+        else:
+            match["time_iso"] = ""
+            match["time_elapsed"] = ""
+            match["time_local"] = ""
+            match["time_paused"] = ""
+
+def timedelta_hhmm(td: dt.timedelta) -> str:
+    """Convert a timedelta to a string of HH:MM (omitting seconds"""
+    seconds = td.total_seconds()
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    return f"{hours:1d}:{minutes:02d}"
 
 
 if __name__ == "__main__":
