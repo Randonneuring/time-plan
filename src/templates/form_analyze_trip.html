@@ -38,7 +38,7 @@
                    value="{{session.get('route_url', '')}}"
                    required>
             </input>
-            <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/123456789</p>
+            <p>A route URL will look like https://ridewithgps.com/<strong>routes</strong>/12345</p>
 
             <p>A <em>trip</em> is the record of your ride. That is where we'll
                 find the time you passed each landmark in the <em>route</em>. You can
@@ -47,9 +47,7 @@
             <div class="trip-urls-wrapper">
                 <!-- LEFT COLUMN: labal and search button  -->
                 <div>
-                    <!-- <label_for trip_url> -->
                         <a href="{{ url_for('form_search_trips_get') }}" class="button">🔍</a> Trip URL:
-                    <!-- </label_for> -->
                 </div>
                 <!-- RIGHT COLUMN: trip URLs -->
                     <div class="trip-url-list">
@@ -81,7 +79,7 @@
                     </div>  <!-- Column -->
             </div>  <!-- Wrapper (horizontal row) for trip URLs -->
 
-            <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/123456789</p>
+            <p>A trip URL will look like https://ridewithgps.com/<strong>trips</strong>/12345</p>
 
 
             <p>Waypoints and special cues on the route are always included.

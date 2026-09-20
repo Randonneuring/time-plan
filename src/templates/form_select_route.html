@@ -14,7 +14,7 @@
         <legend>Select route to analyze</legend>
         <div>
             {% for route in routes %}
-                <input type="radio" id="{{route['id']}}" name="route_id" value="{{route['id']}}">
+                <input type="radio" id="{{route['id']}}" name="route_id" value="{{route['id']}}|{{route['name']}}|{{route['distance']}}">
                 <label for="{{route['id']}}">
                     {{route['name']}}
                     {{route['distance'] // 1000}} km

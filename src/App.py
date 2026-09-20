@@ -349,7 +349,9 @@ def form_analyze_trip_respond():
 @app.route("/form_search_trips_get", methods=["GET"])
 def form_search_trips_get():
     """User on trip form wants to search for a suitable trip"""
-    return render_template("form_search_trips.html")
+    min_km = max(session["route_distance"]//1000  - 20, 0) if "route_distance" in session else 0
+    max_km = session["route_distance"]//1000 + 20  if "route_distance" in session else 9999
+    return render_template("form_search_trips.html", min_km=min_km, max_km=max_km)
 
 
 @app.route("/form_search_trips_respond", methods=["POST"])
@@ -426,12 +428,15 @@ def form_select_route_respond():
     """User has selected a route from the list of candidates.
     Place it into session and redirect to trip analysis form.
     """
-    route_id = request.form.get("route_id", "")
+    route = request.form.get("route_id", "")
+    route_id, route_name, route_distance = route.split("|")
     if route_id.isdigit():
         route_url = f"https://ridewithgps.com/routes/{route_id}"
         # log.debug(f"route: {route_url}")
         session["route_url"] = route_url  # Accessible to form_analyze_trip
         session["route_id"] = route_id
+        session["route_name"] = route_name
+        session["route_distance"] = int(route_distance) if route_distance.isdigit() else None
     return redirect(url_for("form_analyze_trip_get"))
 
 
